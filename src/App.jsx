@@ -1,16 +1,27 @@
-function App() {
-  return (
-    <div className="min-h-screen bg-surface text-text flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-primary">
-          🎮 Gamified Task Tracker
-        </h1>
-        <p className="text-text-secondary text-lg">
-          Setup completato. Pronto per la Fase 1!
-        </p>
-      </div>
-    </div>
-  )
-}
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
+import AppLayout from './components/AppLayout';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            element={
+              <PrivateRoute>
+                <AppLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<DashboardPage />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}

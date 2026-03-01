@@ -1,16 +1,43 @@
-# React + Vite
+# 🎮 Gamified Task Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Trasforma ogni task completato in una **micro-vittoria** con streak, badge e animazioni.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** + **Vite 7** — UI moderna e veloce
+- **TailwindCSS v4** — Styling mobile-first
+- **Framer Motion** — Animazioni gamificate
+- **Zustand** — State management leggero
+- **Firebase** — Auth + Firestore + Hosting
 
-## React Compiler
+## Sviluppo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev       # → http://localhost:5173
+npm run build     # → /dist
+```
 
-## Expanding the ESLint configuration
+## Struttura
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+src/
+├── components/   # UI riutilizzabili (PrivateRoute, AppLayout)
+├── contexts/     # AuthContext (Firebase Auth)
+├── lib/          # Firebase SDK config
+└── pages/        # LoginPage, DashboardPage
+```
+
+## Stato Progetto
+
+- ✅ Fase 0 — Setup completato
+- ✅ Fase 1 — Autenticazione (email/password + Google)
+- ⬜ Fase 2 — Task Board (CRUD)
+- ⬜ Fase 3 — Gamification Engine
+- ⬜ Fase 4 — UI/UX Polish
+- ⬜ Fase 5 — PWA & Deploy
+- ⬜ Fase 6 — Testing & QA
+
+## Licenza
+
+Progetto privato.
