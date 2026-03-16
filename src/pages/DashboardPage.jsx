@@ -1,52 +1,117 @@
-import { motion } from 'framer-motion';
+import { useEffect, useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import useTaskStore from '../stores/useTaskStore';
+import { addTask, toggleTaskComplete, deleteTask } from '../lib/taskService';
+import TaskInput from '../components/TaskInput';
+import TaskItem from '../components/TaskItem';
+import TaskFilter from '../components/TaskFilter';
+import EmptyState from '../components/EmptyState';
 
 export default function DashboardPage() {
-    const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { tasks, loading, subscribe, unsubscribe } = useTaskStore();
+  const [filter, setFilter] = useState('active');
 
-    return (
-        <div className="p-4 pb-24">
-            <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-            >
-                {/* Welcome header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-text">
-                        Ciao{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''} 👋
-                    </h1>
-                    <p className="text-text-secondary text-sm mt-1">
-                        Pronto per una giornata produttiva?
-                    </p>
-                </div>
+  // Subscribe to tasks on mount
+  useEffect(() => {
+    if (!user) return;
+    subscribe(user.uid);
+    return () => unsubscribe();
+  }, [user, subscribe, unsubscribe]);
 
-                {/* Placeholder card — will be replaced by Task Board in Fase 2 */}
-                <div className="bg-surface-card rounded-2xl p-6 border border-white/5">
-                    <div className="flex items-center gap-3 mb-4">
-                        <span className="text-3xl">🚀</span>
-                        <div>
-                            <h2 className="text-lg font-semibold text-text">Setup completato!</h2>
-                            <p className="text-text-secondary text-sm">
-                                L'autenticazione funziona. Il Task Board arriva presto.
-                            </p>
-                        </div>
-                    </div>
+  // Derived state for tasks
+  const counts = useMemo(() => {
+    const active = tasks.filter(t => !t.completed).length;
+    const completed = tasks.filter(t => t.completed).length;
+    return { all: tasks.length, active, completed };
+  }, [tasks]);
 
-                    <div className="text-sm text-text-secondary space-y-1 bg-surface rounded-xl p-4">
-                        <p><span className="text-text-secondary/60">Email:</span> {user?.email}</p>
-                        <p><span className="text-text-secondary/60">UID:</span> <span className="font-mono text-xs">{user?.uid}</span></p>
-                    </div>
-                </div>
+  const filteredTasks = useMemo(() => {
+    if (filter === 'active') return tasks.filter(t => !t.completed);
+    if (filter === 'completed') return tasks.filter(t => t.completed);
+    return tasks;
+  }, [tasks, filter]);
 
-                {/* Logout */}
-                <button
-                    onClick={logout}
-                    className="mt-6 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-text-secondary hover:text-text font-medium rounded-xl transition-all duration-200"
-                >
-                    Esci dall'account
-                </button>
-            </motion.div>
+  const handleAddTask = async (title) => {
+    if (!user) return;
+    try {
+      await addTask(user.uid, title);
+    } catch (e) {
+      console.error("Error adding task:", e);
+    }
+  };
+
+  const handleToggleTask = async (taskId, currentlyCompleted) => {
+    try {
+      await toggleTaskComplete(taskId, currentlyCompleted);
+    } catch (e) {
+      console.error("Error toggling task:", e);
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await deleteTask(taskId);
+    } catch (e) {
+      console.error("Error deleting task:", e);
+    }
+  };
+
+  return (
+    <div className="p-4 pb-24">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* Header */}
+        <div className="mb-6 flex justify-between items-end">
+          <div>
+            <h1 className="text-2xl font-bold text-text">
+              Ciao{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''} 👋
+            </h1>
+            <p className="text-text-secondary text-sm mt-1">
+              Pronto per una giornata produttiva?
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
+              Lvl 1
+            </span>
+          </div>
         </div>
-    );
+
+        {/* Input */}
+        <TaskInput onAdd={handleAddTask} />
+
+        {/* Filter */}
+        {tasks.length > 0 && (
+          <TaskFilter filter={filter} onChange={setFilter} counts={counts} />
+        )}
+
+        {/* Task List */}
+        <div className="mt-4">
+          {loading && tasks.length === 0 ? (
+            <div className="flex justify-center p-8">
+              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          ) : filteredTasks.length > 0 ? (
+            <AnimatePresence mode="popLayout">
+              {filteredTasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  onToggle={handleToggleTask}
+                  onDelete={handleDeleteTask}
+                />
+              ))}
+            </AnimatePresence>
+          ) : (
+            <EmptyState filter={filter} />
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
 }
