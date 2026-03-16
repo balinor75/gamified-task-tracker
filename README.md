@@ -22,17 +22,19 @@ npm run build     # → /dist
 
 ```
 src/
-├── components/   # UI riutilizzabili (PrivateRoute, AppLayout)
+├── components/   # UI riutilizzabili (AppLayout, TaskItem, TaskList)
 ├── contexts/     # AuthContext (Firebase Auth)
-├── lib/          # Firebase SDK config
-└── pages/        # LoginPage, DashboardPage
+├── hooks/        # Custom hooks (useTasks)
+├── lib/          # Firebase SDK config e servizi API
+├── pages/        # LoginPage, DashboardPage
+└── store/        # Zustand stores (taskStore)
 ```
 
 ## Stato Progetto
 
 - ✅ Fase 0 — Setup completato
 - ✅ Fase 1 — Autenticazione (email/password + Google)
-- ⬜ Fase 2 — Task Board (CRUD)
+- ✅ Fase 2 — Task Board (CRUD)
 - ⬜ Fase 3 — Gamification Engine
 - ⬜ Fase 4 — UI/UX Polish
 - ⬜ Fase 5 — PWA & Deploy

@@ -130,11 +130,11 @@ service cloud.firestore {
 - [ ] Test manuale del flusso auth
 
 ### Fase 2 — Task Board (Core CRUD)
-- [ ] Componente `TaskInput` — inserimento rapido con un solo campo
-- [ ] Componente `TaskList` — lista dei task attivi con real-time listener
-- [ ] Componente `TaskItem` — singolo elemento con checkbox e swipe-to-complete
-- [ ] Logica CRUD su Firestore (create, read, update, delete)
-- [ ] Filtro "Completati" / "Attivi"
+- [x] Componente `TaskInput` — inserimento rapido con un solo campo
+- [x] Componente `TaskList` — lista dei task attivi con real-time listener
+- [x] Componente `TaskItem` — singolo elemento con checkbox e swipe-to-complete
+- [x] Logica CRUD su Firestore (create, read, update, delete)
+- [x] Filtro "Completati" / "Attivi"
 
 ### Fase 3 — Gamification Engine
 - [ ] Store Zustand per `user_stats` (streak, contatori)
