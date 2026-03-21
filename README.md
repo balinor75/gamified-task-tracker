@@ -39,7 +39,7 @@ src/
 - ✅ Fase 0 — Setup completato
 - ✅ Fase 1 — Autenticazione (email/password + Google)
 - ✅ Fase 2 — Task Board (CRUD)
-- ⬜ Fase 3 — Gamification Engine
+- ✅ Fase 3 — Gamification Engine
 - ✅ Fase 4 — UI/UX Polish
 - ✅ Fase 5 — PWA & Deploy
 - ⬜ Fase 6 — Testing & QA
