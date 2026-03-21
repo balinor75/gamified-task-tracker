@@ -1,8 +1,8 @@
 # PRD — Gamified Task Tracker PWA
 
-> **Versione:** 1.3  
+> **Versione:** 1.4  
 > **Ultimo aggiornamento:** 2026-03-21  
-> **Stato:** In corso — Fase 4 completata, pronto per Fase 5
+> **Stato:** In corso — Fase 5 completata, pronto per Fase 6
 
 ---
 
@@ -160,12 +160,12 @@ service cloud.firestore {
 - [x] Login page: gradient blobs decorativi, emoji floating, gradient text sul titolo
 - [x] Preferenze cablate in `sounds.js` e `CompletionEffect.jsx`
 
-### Fase 5 — PWA & Deploy
-- [ ] Configurare Service Worker per caching offline
-- [ ] Testare comportamento offline-first
-- [ ] Configurare Firebase Hosting
-- [ ] Deploy su Firebase Hosting
-- [ ] Verificare installabilità PWA (mobile e desktop)
+### Fase 5 — PWA & Deploy ✅
+- [x] Configurare Service Worker per caching offline
+- [x] Testare comportamento offline-first
+- [x] Configurare Firebase Hosting
+- [x] Deploy su Firebase Hosting
+- [x] Verificare installabilità PWA (mobile e desktop)
 
 ### Fase 6 — Testing & QA
 - [ ] Verifica cross-browser (Chrome, Safari, Firefox)
