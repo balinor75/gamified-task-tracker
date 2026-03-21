@@ -1,8 +1,8 @@
 # PRD — Gamified Task Tracker PWA
 
-> **Versione:** 1.2  
+> **Versione:** 1.3  
 > **Ultimo aggiornamento:** 2026-03-21  
-> **Stato:** In corso — Fase 3 completata, pronto per Fase 4
+> **Stato:** In corso — Fase 4 completata, pronto per Fase 5
 
 ---
 
@@ -149,12 +149,16 @@ service cloud.firestore {
 - [x] Toast animato per sblocco nuovi badge
 - [x] Firestore Security Rules aggiornate per `user_stats`
 
-### Fase 4 — UI/UX Polish
-- [ ] Design system con TailwindCSS (colori, tipografia, spacing)
-- [ ] Dark mode toggle
-- [ ] Micro-animazioni su hover, focus, transizioni di pagina
-- [ ] Empty states illustrati
-- [ ] Loading skeleton / shimmer
+### Fase 4 — UI/UX Polish ✅
+- [x] CSS foundation: mesh gradient background, glassmorphism (`.glass-card`), glow hover, gradient text
+- [x] Page transitions con AnimatePresence (fade + slide verticale)
+- [x] Loading skeleton / shimmer (`TaskSkeleton`) al posto dello spinner
+- [x] Gradient accents su StreakBanner (border indigo→amber), StatsPage (tinte per card)
+- [x] Empty states con emoji floating e contenitore glass
+- [x] Micro-animazioni: focus glow su input, hover glow su card, checkbox shadow
+- [x] Settings redesign: toggle Suoni e Animazioni (persistiti in localStorage), sezione Info App
+- [x] Login page: gradient blobs decorativi, emoji floating, gradient text sul titolo
+- [x] Preferenze cablate in `sounds.js` e `CompletionEffect.jsx`
 
 ### Fase 5 — PWA & Deploy
 - [ ] Configurare Service Worker per caching offline

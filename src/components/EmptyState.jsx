@@ -32,8 +32,11 @@ export default function EmptyState({ filter }) {
       animate={{ opacity: 1, scale: 1 }}
       className="flex flex-col items-center justify-center py-16 px-4 text-center"
     >
-      <div className="w-20 h-20 bg-surface-card rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-sm border border-white/5">
-        {content.emoji}
+      {/* Floating emoji with idle animation */}
+      <div className="float-animation">
+        <div className="w-20 h-20 glass-card rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-lg shadow-primary/5">
+          {content.emoji}
+        </div>
       </div>
       <h3 className="text-xl font-bold text-text mb-2">
         {content.title}

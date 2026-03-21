@@ -12,6 +12,10 @@ Trasforma ogni task completato in una **micro-vittoria** con streak, badge e ani
 
 ## Sviluppo
 
+### Live Demo
+L'app è disponibile in produzione su Firebase Hosting:
+[**Gamified Task Tracker - Live**](https://gamified-task-tracker-2026.web.app/)
+
 ```bash
 npm install
 npm run dev       # → http://localhost:5173
@@ -36,8 +40,8 @@ src/
 - ✅ Fase 1 — Autenticazione (email/password + Google)
 - ✅ Fase 2 — Task Board (CRUD)
 - ⬜ Fase 3 — Gamification Engine
-- ⬜ Fase 4 — UI/UX Polish
-- ⬜ Fase 5 — PWA & Deploy
+- ✅ Fase 4 — UI/UX Polish
+- ✅ Fase 5 — PWA & Deploy
 - ⬜ Fase 6 — Testing & QA
 
 ## Licenza

@@ -16,9 +16,11 @@ export default function StreakBanner({ currentStreak, longestStreak }) {
       initial={{ opacity: 0, y: -10, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="mb-6 rounded-2xl overflow-hidden"
+      className={`mb-6 rounded-2xl overflow-hidden ${
+        currentStreak > 0 ? 'p-px bg-gradient-to-r from-primary/30 via-accent/20 to-primary/30' : ''
+      }`}
     >
-      <div className="bg-surface-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-4">
+      <div className="glass-card rounded-2xl p-4">
         <div className="flex items-center gap-4">
           {/* Fire icon with pulse */}
           <div className="relative shrink-0">

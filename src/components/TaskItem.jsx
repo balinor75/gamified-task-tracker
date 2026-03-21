@@ -27,7 +27,7 @@ export default function TaskItem({ task, onToggle, onDelete }) {
       className="relative mb-3 rounded-2xl overflow-hidden"
       ref={dragContainerRef}
     >
-      {/* Background Delete Button (revealed on wipe) */}
+      {/* Background Delete Button (revealed on swipe) */}
       <motion.div
         style={{ opacity: backgroundOpacity }}
         className="absolute inset-0 bg-red-500/20 flex items-center justify-end pr-6 z-0"
@@ -44,14 +44,14 @@ export default function TaskItem({ task, onToggle, onDelete }) {
         onDragEnd={handleDragEnd}
         animate={controls}
         style={{ x }}
-        className="relative z-10 bg-surface-card border border-white/5 rounded-2xl p-4 flex items-start gap-4 shadow-sm"
+        className="relative z-10 glass-card glow-hover rounded-2xl p-4 flex items-start gap-4 shadow-sm"
       >
         <button
           onClick={() => onToggle(task.id, task.completed)}
-          className={`shrink-0 w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center transition-colors ${
+          className={`shrink-0 w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
             task.completed
-              ? 'bg-primary border-primary text-background'
-              : 'border-white/20 hover:border-white/40'
+              ? 'bg-primary border-primary text-background shadow-md shadow-primary/30'
+              : 'border-white/20 hover:border-primary/50 hover:shadow-sm hover:shadow-primary/20'
           }`}
         >
           {task.completed && (

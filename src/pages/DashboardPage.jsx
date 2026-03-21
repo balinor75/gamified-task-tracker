@@ -14,6 +14,7 @@ import EmptyState from '../components/EmptyState';
 import StreakBanner from '../components/StreakBanner';
 import CompletionEffect from '../components/CompletionEffect';
 import BadgeToast from '../components/BadgeToast';
+import TaskSkeleton from '../components/TaskSkeleton';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -158,9 +159,7 @@ export default function DashboardPage() {
         {/* Task List */}
         <div className="mt-4">
           {loading && tasks.length === 0 ? (
-            <div className="flex justify-center p-8">
-              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-            </div>
+            <TaskSkeleton />
           ) : filteredTasks.length > 0 ? (
             <AnimatePresence mode="popLayout">
               {filteredTasks.map((task) => (

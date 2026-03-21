@@ -1,7 +1,20 @@
 /**
  * Procedural sound effects using Web Audio API.
  * No external audio files needed.
+ * Respects user preferences stored in localStorage.
  */
+
+const PREFS_KEY = 'gtt_preferences';
+
+function areSoundsEnabled() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return true;
+    return JSON.parse(raw).sounds !== false;
+  } catch {
+    return true;
+  }
+}
 
 let audioCtx = null;
 
@@ -20,6 +33,7 @@ function getAudioContext() {
  * Play a short "pop" sound when completing a task.
  */
 export function playCompleteSound() {
+  if (!areSoundsEnabled()) return;
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
@@ -61,6 +75,7 @@ export function playCompleteSound() {
  * Play a celebratory "chime" sound for badge unlocks.
  */
 export function playBadgeSound() {
+  if (!areSoundsEnabled()) return;
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;

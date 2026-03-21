@@ -3,20 +3,37 @@ import { useEffect, useState, useMemo } from 'react';
 
 const PARTICLE_COUNT = 24;
 const COLORS = ['#6366f1', '#818cf8', '#f59e0b', '#fbbf24', '#10b981', '#ef4444', '#ec4899', '#8b5cf6'];
+const PREFS_KEY = 'gtt_preferences';
 
 function randomBetween(a, b) {
   return Math.random() * (b - a) + a;
 }
 
+function areAnimationsEnabled() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (!raw) return true;
+    return JSON.parse(raw).animations !== false;
+  } catch {
+    return true;
+  }
+}
+
 /**
  * Full-screen confetti + checkmark burst animation.
  * Renders for ~1.5s then auto-removes via onComplete.
+ * Respects user animation preferences.
  */
 export default function CompletionEffect({ show, onComplete }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (show) {
+      if (!areAnimationsEnabled()) {
+        // Skip animation but still call onComplete
+        onComplete?.();
+        return;
+      }
       setVisible(true);
       const timer = setTimeout(() => {
         setVisible(false);
@@ -58,7 +75,7 @@ export default function CompletionEffect({ show, onComplete }) {
             transition={{ type: 'spring', damping: 12, stiffness: 200 }}
             className="absolute"
           >
-            <div className="w-20 h-20 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center shadow-xl shadow-primary/20">
               <motion.svg
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}

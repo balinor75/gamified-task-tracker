@@ -6,11 +6,13 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import StatsPage from './pages/StatsPage';
 import SettingsPage from './pages/SettingsPage';
+import ReloadPrompt from './components/ReloadPrompt';
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ReloadPrompt />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
