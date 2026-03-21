@@ -1,8 +1,8 @@
 # PRD — Gamified Task Tracker PWA
 
-> **Versione:** 1.0  
-> **Ultimo aggiornamento:** 2026-03-01  
-> **Stato:** Approvato — Pronto per l'implementazione
+> **Versione:** 1.1  
+> **Ultimo aggiornamento:** 2026-03-21  
+> **Stato:** In corso — Fase 2 completata, pronto per Fase 3
 
 ---
 
@@ -113,23 +113,23 @@ service cloud.firestore {
 
 ## 4. Fasi di Implementazione
 
-### Fase 0 — Setup Progetto
-- [ ] Creare repository GitHub (`gamified-task-tracker`)
-- [ ] Inizializzare progetto React con Vite (`npx create-vite@latest`)
-- [ ] Installare dipendenze: `tailwindcss`, `framer-motion`, `zustand`, `firebase`
-- [ ] Configurare TailwindCSS v4
-- [ ] Configurare Firebase project (Auth + Firestore + Hosting)
-- [ ] Configurare PWA manifest e Service Worker
-- [ ] Commit iniziale e push su GitHub
+### Fase 0 — Setup Progetto ✅
+- [x] Creare repository GitHub (`gamified-task-tracker`)
+- [x] Inizializzare progetto React con Vite (`npx create-vite@latest`)
+- [x] Installare dipendenze: `tailwindcss`, `framer-motion`, `zustand`, `firebase`
+- [x] Configurare TailwindCSS v4
+- [x] Configurare Firebase project (Auth + Firestore + Hosting)
+- [x] Configurare PWA manifest e Service Worker
+- [x] Commit iniziale e push su GitHub
 
-### Fase 1 — Autenticazione
-- [ ] Implementare pagina Login/Signup
-- [ ] Integrare Firebase Auth (email/password + Google)
-- [ ] Creare `AuthContext` React con protezione route
-- [ ] Scrivere Firestore Security Rules
-- [ ] Test manuale del flusso auth
+### Fase 1 — Autenticazione ✅
+- [x] Implementare pagina Login/Signup
+- [x] Integrare Firebase Auth (email/password + Google)
+- [x] Creare `AuthContext` React con protezione route
+- [x] Scrivere Firestore Security Rules
+- [x] Test manuale del flusso auth
 
-### Fase 2 — Task Board (Core CRUD)
+### Fase 2 — Task Board (Core CRUD) ✅
 - [x] Componente `TaskInput` — inserimento rapido con un solo campo
 - [x] Componente `TaskList` — lista dei task attivi con real-time listener
 - [x] Componente `TaskItem` — singolo elemento con checkbox e swipe-to-complete

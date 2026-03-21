@@ -7,7 +7,6 @@ import {
   serverTimestamp,
   query,
   where,
-  orderBy,
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -53,13 +52,26 @@ export function subscribeTasks(uid, callback) {
   const q = query(
     collection(db, TASKS),
     where('user_id', '==', uid),
-    orderBy('created_at', 'desc'),
   );
-  return onSnapshot(q, (snapshot) => {
-    const tasks = snapshot.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-    callback(tasks);
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const tasks = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+      // Sort client-side: newest first (avoids composite index requirement)
+      tasks.sort((a, b) => {
+        const ta = a.created_at?.toMillis?.() ?? 0;
+        const tb = b.created_at?.toMillis?.() ?? 0;
+        return tb - ta;
+      });
+      callback(tasks);
+    },
+    (error) => {
+      console.error('Tasks subscription error:', error);
+      // Return empty list so the UI doesn't hang on spinner
+      callback([]);
+    }
+  );
 }

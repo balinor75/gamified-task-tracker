@@ -1,24 +1,53 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import useTaskStore from '../stores/useTaskStore';
+import useStatsStore, { selectLevel, selectLevelProgress } from '../stores/useStatsStore';
 import { addTask, toggleTaskComplete, deleteTask } from '../lib/taskService';
+import { updateStatsOnComplete } from '../lib/statsService';
+import { getNewlyUnlocked, getBadgeById } from '../lib/badges';
+import { playCompleteSound, playBadgeSound } from '../lib/sounds';
 import TaskInput from '../components/TaskInput';
 import TaskItem from '../components/TaskItem';
 import TaskFilter from '../components/TaskFilter';
 import EmptyState from '../components/EmptyState';
+import StreakBanner from '../components/StreakBanner';
+import CompletionEffect from '../components/CompletionEffect';
+import BadgeToast from '../components/BadgeToast';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { tasks, loading, subscribe, unsubscribe } = useTaskStore();
-  const [filter, setFilter] = useState('active');
+  const { tasks, loading, subscribe: subscribeTasks, unsubscribe: unsubTasks } = useTaskStore();
+  const { currentStreak, longestStreak, unlockedBadges } = useStatsStore();
+  const level = useStatsStore(selectLevel);
+  const levelProgress = useStatsStore(selectLevelProgress);
 
-  // Subscribe to tasks on mount
+  const [filter, setFilter] = useState('active');
+  const [showEffect, setShowEffect] = useState(false);
+  const [pendingBadge, setPendingBadge] = useState(null);
+  const prevBadgesRef = useRef([]);
+
+  // Subscribe to tasks and stats on mount
   useEffect(() => {
     if (!user) return;
-    subscribe(user.uid);
-    return () => unsubscribe();
-  }, [user, subscribe, unsubscribe]);
+    subscribeTasks(user.uid);
+    return () => unsubTasks();
+  }, [user, subscribeTasks, unsubTasks]);
+
+  // Check for newly unlocked badges
+  useEffect(() => {
+    if (unlockedBadges.length > 0) {
+      const newlyUnlocked = getNewlyUnlocked(prevBadgesRef.current, unlockedBadges);
+      if (newlyUnlocked.length > 0) {
+        const badge = getBadgeById(newlyUnlocked[0]);
+        if (badge) {
+          setPendingBadge(badge);
+          playBadgeSound();
+        }
+      }
+      prevBadgesRef.current = unlockedBadges;
+    }
+  }, [unlockedBadges]);
 
   // Derived state for tasks
   const counts = useMemo(() => {
@@ -42,13 +71,19 @@ export default function DashboardPage() {
     }
   };
 
-  const handleToggleTask = async (taskId, currentlyCompleted) => {
+  const handleToggleTask = useCallback(async (taskId, currentlyCompleted) => {
     try {
       await toggleTaskComplete(taskId, currentlyCompleted);
+      // If completing (not un-completing), trigger gamification
+      if (!currentlyCompleted && user) {
+        playCompleteSound();
+        setShowEffect(true);
+        await updateStatsOnComplete(user.uid);
+      }
     } catch (e) {
       console.error("Error toggling task:", e);
     }
-  };
+  }, [user]);
 
   const handleDeleteTask = async (taskId) => {
     try {
@@ -58,6 +93,14 @@ export default function DashboardPage() {
     }
   };
 
+  const handleEffectComplete = useCallback(() => {
+    setShowEffect(false);
+  }, []);
+
+  const handleBadgeDismiss = useCallback(() => {
+    setPendingBadge(null);
+  }, []);
+
   return (
     <div className="p-4 pb-24">
       <motion.div
@@ -66,7 +109,7 @@ export default function DashboardPage() {
         transition={{ duration: 0.4 }}
       >
         {/* Header */}
-        <div className="mb-6 flex justify-between items-end">
+        <div className="mb-4 flex justify-between items-end">
           <div>
             <h1 className="text-2xl font-bold text-text">
               Ciao{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''} 👋
@@ -76,11 +119,33 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="text-right">
-            <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
-              Lvl 1
-            </span>
+            <motion.div
+              key={level}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative"
+            >
+              <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">
+                Lvl {level}
+              </span>
+              {/* Level progress ring (simplified as a bottom bar) */}
+              <div className="mt-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${levelProgress}%` }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="h-full bg-primary/50 rounded-full"
+                />
+              </div>
+            </motion.div>
           </div>
         </div>
+
+        {/* Streak Banner */}
+        <StreakBanner
+          currentStreak={currentStreak}
+          longestStreak={longestStreak}
+        />
 
         {/* Input */}
         <TaskInput onAdd={handleAddTask} />
@@ -112,6 +177,12 @@ export default function DashboardPage() {
           )}
         </div>
       </motion.div>
+
+      {/* Completion Effect Overlay */}
+      <CompletionEffect show={showEffect} onComplete={handleEffectComplete} />
+
+      {/* Badge Toast */}
+      <BadgeToast badge={pendingBadge} onDismiss={handleBadgeDismiss} />
     </div>
   );
 }

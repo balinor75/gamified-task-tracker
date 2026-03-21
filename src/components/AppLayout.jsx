@@ -1,6 +1,18 @@
+import { useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import useStatsStore from '../stores/useStatsStore';
 
 export default function AppLayout() {
+  const { user } = useAuth();
+
+  // Subscribe to stats at layout level so it persists across pages
+  useEffect(() => {
+    if (!user) return;
+    useStatsStore.getState().subscribe(user.uid);
+    return () => useStatsStore.getState().unsubscribe();
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-surface text-text">
       {/* Main content area */}
