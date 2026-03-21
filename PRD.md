@@ -1,8 +1,8 @@
 # PRD — Gamified Task Tracker PWA
 
-> **Versione:** 1.1  
+> **Versione:** 1.2  
 > **Ultimo aggiornamento:** 2026-03-21  
-> **Stato:** In corso — Fase 2 completata, pronto per Fase 3
+> **Stato:** In corso — Fase 3 completata, pronto per Fase 4
 
 ---
 
@@ -96,14 +96,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /tasks/{taskId} {
-      allow read, write: if request.auth != null
+      allow read, update, delete: if request.auth != null
         && request.auth.uid == resource.data.user_id;
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.user_id;
     }
     match /user_stats/{statId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.user_id;
+      allow read, update: if request.auth != null
+        && request.auth.uid == statId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.user_id;
     }
   }
 }
@@ -136,13 +138,16 @@ service cloud.firestore {
 - [x] Logica CRUD su Firestore (create, read, update, delete)
 - [x] Filtro "Completati" / "Attivi"
 
-### Fase 3 — Gamification Engine
-- [ ] Store Zustand per `user_stats` (streak, contatori)
-- [ ] Logica di calcolo streak (giorni consecutivi con almeno 1 task completato)
-- [ ] Animazione di completamento task (Framer Motion: checkmark + confetti)
-- [ ] Badge e milestone visivi (es. "10 task!", "7 giorni di fila!")
-- [ ] Suoni di completamento (Web Audio API)
-- [ ] Componente `StreakBanner` nella dashboard
+### Fase 3 — Gamification Engine ✅
+- [x] Store Zustand per `user_stats` (streak, contatori, livello)
+- [x] Logica di calcolo streak (giorni consecutivi con almeno 1 task completato)
+- [x] Animazione di completamento task (Framer Motion: checkmark + confetti)
+- [x] Badge e milestone visivi (7 badge: streak + task completati)
+- [x] Suoni di completamento (Web Audio API)
+- [x] Componente `StreakBanner` nella dashboard
+- [x] Pagina Stats con card animate e griglia badge
+- [x] Toast animato per sblocco nuovi badge
+- [x] Firestore Security Rules aggiornate per `user_stats`
 
 ### Fase 4 — UI/UX Polish
 - [ ] Design system con TailwindCSS (colori, tipografia, spacing)
