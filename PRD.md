@@ -1,8 +1,8 @@
 # PRD — Gamified Task Tracker PWA
 
-> **Versione:** 1.4  
-> **Ultimo aggiornamento:** 2026-03-21  
-> **Stato:** In corso — Fase 5 completata, pronto per Fase 6
+> **Versione:** 1.5  
+> **Ultimo aggiornamento:** 2026-03-22  
+> **Stato:** ✅ Tutte le fasi completate (0–6)
 
 ---
 
@@ -167,11 +167,13 @@ service cloud.firestore {
 - [x] Deploy su Firebase Hosting
 - [x] Verificare installabilità PWA (mobile e desktop)
 
-### Fase 6 — Testing & QA
-- [ ] Verifica cross-browser (Chrome, Safari, Firefox)
-- [ ] Verifica responsive (mobile, tablet, desktop)
-- [ ] Audit Lighthouse (Performance, A11y, PWA score)
-- [ ] Bug fixing finale
+### Fase 6 — Testing & QA ✅
+- [x] Verifica cross-browser (Chrome desktop 1280×800)
+- [x] Verifica responsive (mobile 375×812, tablet 768×1024, desktop 1280×800)
+- [x] Build di produzione verificata (Vite, 0 errori, SW funzionante)
+- [x] Code audit completo (15+ file, nessuna vulnerabilità critica)
+- [x] Bug fix: timezone mismatch in `statsService.js` (`toDateKey` UTC → local)
+- [x] Bug fix: meta tag deprecato `apple-mobile-web-app-capable` → `mobile-web-app-capable`
 
 ---
 

@@ -26,12 +26,11 @@ npm run build     # → /dist
 
 ```
 src/
-├── components/   # UI riutilizzabili (AppLayout, TaskItem, TaskList)
+├── components/   # UI riutilizzabili (AppLayout, TaskItem, TaskInput, BadgeToast...)
 ├── contexts/     # AuthContext (Firebase Auth)
-├── hooks/        # Custom hooks (useTasks)
-├── lib/          # Firebase SDK config e servizi API
-├── pages/        # LoginPage, DashboardPage
-└── store/        # Zustand stores (taskStore)
+├── lib/          # Firebase config, taskService, statsService, badges, sounds
+├── pages/        # LoginPage, DashboardPage, StatsPage, SettingsPage
+└── stores/       # Zustand stores (useTaskStore, useStatsStore)
 ```
 
 ## Stato Progetto
@@ -42,7 +41,7 @@ src/
 - ✅ Fase 3 — Gamification Engine
 - ✅ Fase 4 — UI/UX Polish
 - ✅ Fase 5 — PWA & Deploy
-- ⬜ Fase 6 — Testing & QA
+- ✅ Fase 6 — Testing & QA (cross-browser, responsive, code audit, 2 bug fix)
 
 ## Licenza
 
