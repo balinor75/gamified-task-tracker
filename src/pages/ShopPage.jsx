@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useStatsStore from '../stores/useStatsStore';
 import { useAuth } from '../contexts/AuthContext';
 import { buyItem, consumeItem, getCustomRewards, createCustomReward, deleteCustomReward } from '../lib/shopService';
+import useTaskStore from '../stores/useTaskStore';
+import { updateTask } from '../lib/taskService';
+import HealingEffect from '../components/HealingEffect';
 
 const SHOP_ITEMS = [
   { id: 'health_potion', name: 'Pozione Curativa', desc: 'Ripristina uno Streak perso.', price: 50, icon: '🍷', color: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.3)', textColor: '#FCA5A5' },
@@ -14,6 +17,10 @@ export default function ShopPage() {
   const { user } = useAuth();
   const coins = useStatsStore(state => state.coins);
   const inventory = useStatsStore(state => state.inventory);
+  
+  const { tasks, subscribe: subscribeTasks, unsubscribe: unsubTasks } = useTaskStore();
+  const [showTaskSelector, setShowTaskSelector] = useState(false);
+  const [showHealing, setShowHealing] = useState(false);
   
   const [tab, setTab] = useState('negozio'); // 'negozio' | 'desideri' | 'zaino'
   const [buyingId, setBuyingId] = useState(null);
@@ -36,6 +43,12 @@ export default function ShopPage() {
     }
     setLoadingCustom(false);
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    subscribeTasks(user.uid);
+    return () => unsubTasks();
+  }, [user, subscribeTasks, unsubTasks]);
 
   useEffect(() => {
     if (tab === 'desideri') {
@@ -72,9 +85,19 @@ export default function ShopPage() {
 
   const handleConsume = async (itemId) => {
     if (!user) return;
+    
+    // Mostra selettore per resurrezione (non consumare item subito)
+    if (itemId === 'resurrect_scroll') {
+      setShowTaskSelector(true);
+      return;
+    }
+    
     try {
+      if (itemId === 'health_potion') {
+        setShowHealing(true); // Animazione curativa
+      }
+      
       await consumeItem(user.uid, itemId, false);
-      // Eventualmente suoni / alert
     } catch (e) {
       console.error(e);
     }
@@ -256,8 +279,69 @@ export default function ShopPage() {
             </motion.div>
           )}
         </AnimatePresence>
-
       </motion.div>
+
+      {/* Healing Effect */}
+      <HealingEffect show={showHealing} onComplete={() => setShowHealing(false)} />
+
+      {/* Task Selector Modal per Pergamena del Tempo */}
+      <AnimatePresence>
+        {showTaskSelector && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: -20 }}
+              className="glass-card w-full max-w-sm p-6 rounded-3xl border border-[rgba(245,158,11,0.3)] shadow-[0_4px_32px_rgba(245,158,11,0.2)] relative"
+            >
+               <div className="flex items-center gap-3 mb-4">
+                 <span className="text-3xl">📜</span>
+                 <div>
+                   <h3 className="font-bold text-lg text-[#FCD34D]">Usa Pergamena</h3>
+                   <p className="text-xs text-[#958DA1]">Seleziona il task da spostare a domani.</p>
+                 </div>
+               </div>
+               
+               <div className="max-h-60 overflow-y-auto space-y-2 mb-4 custom-scrollbar">
+                 {tasks.filter(t => !t.completed && t.type !== 'habit').length === 0 ? (
+                    <p className="text-sm text-[#958DA1] text-center py-4">Nessun task disponibile.</p>
+                 ) : (
+                   tasks.filter(t => !t.completed && t.type !== 'habit').map(task => (
+                     <button
+                       key={task.id}
+                       onClick={async () => {
+                         const tomorrow = new Date();
+                         tomorrow.setDate(tomorrow.getDate() + 1);
+                         const dl = tomorrow.toISOString().split('T')[0];
+                         await updateTask(task.id, { deadline: dl });
+                         await consumeItem(user.uid, 'resurrect_scroll', false);
+                         setShowTaskSelector(false);
+                       }}
+                       className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex justify-between items-center"
+                     >
+                       <span className="text-sm font-medium text-white truncate pr-2">{task.title}</span>
+                       {task.deadline && <span className="text-[10px] text-[#958DA1] shrink-0">{task.deadline}</span>}
+                     </button>
+                   ))
+                 )}
+               </div>
+               
+               <button
+                 onClick={() => setShowTaskSelector(false)}
+                 className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold text-sm transition-colors"
+               >
+                 Annulla
+               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

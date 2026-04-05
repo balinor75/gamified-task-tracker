@@ -10,5 +10,9 @@ service cloud.firestore {
       allow update: if request.auth != null && request.auth.uid == statId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
     }
+    match /custom_rewards/{rewardId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.user_id;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
+    }
   }
 }
