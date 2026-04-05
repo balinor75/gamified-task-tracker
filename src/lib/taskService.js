@@ -23,18 +23,40 @@ export async function addTask(uid, title) {
     completed: false,
     created_at: serverTimestamp(),
     completed_at: null,
+    subtasks: [], // Phase 1: Support for complex missions
   });
 }
 
 /**
  * Toggle the completed status of a task.
+ * Also syncs subtasks completion status if provided.
  */
-export async function toggleTaskComplete(taskId, currentlyCompleted) {
+export async function toggleTaskComplete(taskId, currentlyCompleted, currentSubtasks = []) {
   const ref = doc(db, TASKS, taskId);
-  return updateDoc(ref, {
-    completed: !currentlyCompleted,
-    completed_at: !currentlyCompleted ? serverTimestamp() : null,
-  });
+  const isNowCompleted = !currentlyCompleted;
+  
+  const updates = {
+    completed: isNowCompleted,
+    completed_at: isNowCompleted ? serverTimestamp() : null,
+  };
+
+  // If a task is fully completed or reopened, auto-sync its subtasks
+  if (currentSubtasks && currentSubtasks.length > 0) {
+    updates.subtasks = currentSubtasks.map(st => ({
+      ...st,
+      completed: isNowCompleted
+    }));
+  }
+
+  return updateDoc(ref, updates);
+}
+
+/**
+ * Generic update for any task fields (e.g. updating the subtasks array).
+ */
+export async function updateTask(taskId, updates) {
+  const ref = doc(db, TASKS, taskId);
+  return updateDoc(ref, updates);
 }
 
 /**
