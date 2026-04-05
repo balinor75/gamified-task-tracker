@@ -1,113 +1,365 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-/* Design System — Gamified Task Tracker */
+/* ═══════════════════════════════════════════════════════════
+   Design System — Aetheric Quest (V2)
+   "The Ethereal Archive" — Dark RPG, Glassmorphism, Editorial
+   ═══════════════════════════════════════════════════════════ */
 @theme {
-  --color-primary: #6366f1;
-  --color-primary-light: #818cf8;
-  --color-primary-dark: #4f46e5;
-  --color-accent: #f59e0b;
-  --color-accent-light: #fbbf24;
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-surface: #0f172a;
-  --color-surface-light: #1e293b;
-  --color-surface-card: #1e293b;
-  --color-text: #f8fafc;
-  --color-text-secondary: #94a3b8;
+  /* ── Core Palette ── */
+  --color-void:             #0E1322;   /* Deep Void — canvas background */
+  --color-surface-0:        #090E1C;   /* surface_container_lowest */
+  --color-surface-1:        #161B2B;   /* surface_container_low */
+  --color-surface-2:        #1A1F2F;   /* surface_container */
+  --color-surface-3:        #25293A;   /* surface_container_high */
+  --color-surface-4:        #2F3445;   /* surface_container_highest */
+  --color-surface-bright:   #343949;   /* surface_bright */
+
+  /* ── Primary — Arcane Energy (Violet) ── */
+  --color-primary:          #D2BBFF;   /* primary (light/on-dark) */
+  --color-primary-container: #7C3AED;  /* primary_container (vivid violet) */
+  --color-primary-fixed:    #EADDFF;   /* primary_fixed */
+  --color-on-primary:       #3F008E;   /* on_primary */
+  --color-on-primary-container: #EDE0FF; /* on_primary_container */
+
+  /* ── Secondary — Astral Gold (Amber) — HIGH VALUE SIGNAL ── */
+  --color-gold:             #FFB95F;   /* secondary */
+  --color-gold-container:   #EE9800;   /* secondary_container */
+  --color-gold-fixed:       #FFDDB8;   /* secondary_fixed */
+
+  /* ── Tertiary — Arcane Lilac ── */
+  --color-tertiary:         #D7BAFF;   /* tertiary */
+  --color-tertiary-container: #7A52B3; /* tertiary_container */
+
+  /* ── Semantic Colors ── */
+  --color-error:            #FFB4AB;
+  --color-success:          #6EE7B7;
+
+  /* ── Text Colors ── */
+  --color-text:             #DEE1F7;   /* on_surface */
+  --color-text-secondary:   #CCC3D8;   /* on_surface_variant */
+  --color-outline:          #958DA1;   /* outline */
+  --color-outline-ghost:    rgba(74, 68, 85, 0.4); /* outline_variant @ low opacity */
+
+  /* ── Legacy aliases (backward compat for existing components) ── */
+  --color-background:       #0E1322;
+  --color-surface:          #0E1322;
+  --color-surface-card:     #1A1F2F;
+  --color-primary-dark:     #5A00C6;
+  --color-accent:           #FFB95F;
+  --color-accent-light:     #FFDDB8;
+  --color-danger:           #FFB4AB;
+
+  /* ── Typography ── */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Global resets */
-* {
+/* ═══════════════════
+   Global Resets
+   ═══════════════════ */
+*, *::before, *::after {
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background-color: #0f172a;
-  color: #f8fafc;
-  /* Mesh gradient background */
+  background-color: #0E1322;
+  color: #DEE1F7;
+  /* Nebula ambient mesh — the "Void" canvas */
   background-image:
-    radial-gradient(ellipse 60% 50% at 10% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 90% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 55% at 15% 0%, rgba(124, 58, 237, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 40% at 88% 12%, rgba(210, 187, 255, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 35% at 50% 100%, rgba(122, 82, 179, 0.07) 0%, transparent 55%);
   background-attachment: fixed;
+  background-size: cover;
 }
 
-/* Selection */
+/* ── Selection ── */
 ::selection {
-  background-color: rgba(99, 102, 241, 0.3);
-  color: #f8fafc;
+  background-color: rgba(124, 58, 237, 0.35);
+  color: #EDE0FF;
 }
 
-/* Scrollbar (Webkit) */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.35);
-}
-
-/* Safe area for bottom nav (iOS notch) */
-.safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Focus visible */
+/* ── Focus visible ── */
 :focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid #7C3AED;
   outline-offset: 2px;
 }
 
-/* ─── Utility Classes ─── */
-
-/* Glassmorphism card */
-.glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.45);
 }
 
-/* Subtle glow on hover */
+/* ═══════════════════════════════
+   Core Component: Glassmorphism
+   ═══════════════════════════════ */
+
+/* Glass Card — primary surface recipe */
+.glass-card {
+  background: rgba(26, 31, 47, 0.72);   /* surface-2 @ 72% */
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(74, 68, 85, 0.18); /* ghost border */
+}
+
+/* Glass Card elevated (hero elements, modals) */
+.glass-card-high {
+  background: rgba(37, 41, 58, 0.82);   /* surface-3 @ 82% */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(210, 187, 255, 0.08);
+}
+
+/* Safe area for iOS bottom notch */
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+/* ═══════════════════════════
+   Interaction Utilities
+   ═══════════════════════════ */
+
+/* Hover glow — "Ghost Border lights up" on hover */
 .glow-hover {
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 .glow-hover:hover {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1), 0 0 40px rgba(99, 102, 241, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.22),
+              0 4px 24px rgba(124, 58, 237, 0.12),
+              0 0 40px rgba(124, 58, 237, 0.04);
+  border-color: rgba(124, 58, 237, 0.28);
 }
 
-/* Gradient text */
+/* Active-card glow (expanded task / selected state) */
+.glow-active {
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4),
+              0 4px 32px rgba(124, 58, 237, 0.2),
+              0 0 64px rgba(124, 58, 237, 0.06);
+  border-color: rgba(124, 58, 237, 0.45) !important;
+}
+
+/* ═══════════════════════
+   Typography Utilities
+   ═══════════════════════ */
+
+/* Gradient text — primary to tertiary */
 .gradient-text {
-  background: linear-gradient(135deg, #818cf8, #a78bfa, #c084fc);
+  background: linear-gradient(135deg, #D2BBFF, #BD93F9, #7C3AED);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Shimmer animation */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+/* Gold gradient text (XP/Streak) */
+.gold-text {
+  background: linear-gradient(135deg, #FFB95F, #FFDDB8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
+/* ═══════════════════════════
+   Badge / Chip Components
+   ═══════════════════════════ */
+
+/* Difficulty badge — FACILE */
+.badge-easy {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(110, 231, 183, 0.12);
+  color: #6EE7B7;
+  border: 1px solid rgba(110, 231, 183, 0.2);
+}
+
+/* Difficulty badge — MEDIA */
+.badge-medium {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(255, 185, 95, 0.12);
+  color: #FFB95F;
+  border: 1px solid rgba(255, 185, 95, 0.2);
+}
+
+/* Difficulty badge — DIFFICILE */
+.badge-hard {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(255, 180, 171, 0.12);
+  color: #FFB4AB;
+  border: 1px solid rgba(255, 180, 171, 0.2);
+}
+
+/* XP Chip — Amber Gold */
+.chip-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  background: rgba(238, 152, 0, 0.15);
+  color: #FFB95F;
+  border: 1px solid rgba(238, 152, 0, 0.22);
+}
+
+.chip-deadline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  background: rgba(255, 185, 95, 0.1);
+  color: #FFB95F;
+  border: 1px solid rgba(255, 185, 95, 0.18);
+}
+
+/* Phase 6: Expired */
+.chip-deadline.expired {
+  background: rgba(255, 180, 171, 0.15); /* color-error locale */
+  color: #FFB4AB;
+  border-color: rgba(255, 180, 171, 0.3);
+  animation: pulse-danger 2.5s infinite;
+}
+
+/* Phase 6: Due Today */
+.chip-deadline.due-today {
+  background: rgba(238, 152, 0, 0.15); /* color-gold-container locale */
+  color: #FFB95F; /* color-gold */
+  border-color: rgba(238, 152, 0, 0.3);
+}
+
+@keyframes pulse-danger {
+  0% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0.2); }
+  70% { box-shadow: 0 0 0 6px rgba(255, 180, 171, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0); }
+}
+
+/* ═══════════════════════════
+   Progress Bar
+   ═══════════════════════════ */
+
+.progress-track {
+  height: 4px;
+  background: rgba(9, 14, 28, 0.8); /* surface-0 */
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7C3AED, #D7BAFF);
+  /* Burning-edge glow on the leading end */
+  box-shadow: 2px 0 8px rgba(124, 58, 237, 0.6);
+  transition: width 0.5s ease;
+}
+
+/* ═══════════════════════
+   Level / XP Pill
+   ═══════════════════════ */
+
+.level-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(124, 58, 237, 0.18);
+  color: #D2BBFF;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════
+   Bottom Nav Bar
+   ═══════════════════════ */
+
+.nav-bar {
+  background: rgba(9, 14, 28, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(74, 68, 85, 0.25);
+}
+
+.nav-item-active {
+  color: #D2BBFF;
+  background: rgba(124, 58, 237, 0.14);
+  border-radius: 16px;
+}
+
+.nav-item-inactive {
+  color: #958DA1;
+}
+
+/* Active dot below nav icon */
+.nav-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #7C3AED;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════
+   Character / Hero Card
+   ═══════════════════════════ */
+
+.hero-card {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.35) 0%, rgba(65, 20, 120, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(210, 187, 255, 0.12);
+}
+
+/* ═══════════════════════
+   Animations
+   ═══════════════════════ */
+
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
 .shimmer {
   position: relative;
   overflow: hidden;
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(26, 31, 47, 0.7);
 }
 .shimmer::after {
   content: '';
@@ -116,19 +368,59 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.04) 40%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 60%,
+    rgba(210, 187, 255, 0.04) 40%,
+    rgba(210, 187, 255, 0.08) 50%,
+    rgba(210, 187, 255, 0.04) 60%,
     transparent 100%
   );
-  animation: shimmer 1.8s ease-in-out infinite;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
-/* Floating animation for decorative elements */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50%       { transform: translateY(-6px); }
 }
 .float-animation {
-  animation: float 3s ease-in-out infinite;
+  animation: float 3.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(124, 58, 237, 0.2); }
+  50%       { box-shadow: 0 0 24px rgba(124, 58, 237, 0.45); }
+}
+.pulse-glow {
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes xp-flash {
+  0%   { opacity: 0; transform: translateY(0) scale(0.8); }
+  30%  { opacity: 1; transform: translateY(-6px) scale(1.1); }
+  70%  { opacity: 1; transform: translateY(-10px) scale(1); }
+  100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
+}
+.xp-flash {
+  animation: xp-flash 0.8s ease-out forwards;
+}
+
+/* ═══════════════════════════════
+   Runic Checkbox (task toggle)
+   ═══════════════════════════════ */
+
+.runic-node {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(149, 141, 161, 0.4);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.runic-node:hover {
+  border-color: rgba(124, 58, 237, 0.55);
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.25);
+}
+.runic-node.checked {
+  background: #7C3AED;
+  border-color: #7C3AED;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.5),
+              0 0 24px rgba(124, 58, 237, 0.15);
 }

@@ -15,10 +15,15 @@ export default function StreakBanner({ currentStreak, longestStreak }) {
     <motion.div
       initial={{ opacity: 0, y: -10, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-      className={`mb-6 rounded-2xl overflow-hidden ${
-        currentStreak > 0 ? 'p-px bg-gradient-to-r from-primary/30 via-accent/20 to-primary/30' : ''
+      transition={{ duration: 0.45, delay: 0.1 }}
+      className={`mb-5 rounded-2xl overflow-hidden ${
+        currentStreak > 0
+          ? 'p-px'
+          : ''
       }`}
+      style={currentStreak > 0 ? {
+        background: 'linear-gradient(90deg, rgba(124,58,237,0.35), rgba(238,152,0,0.25), rgba(124,58,237,0.35))'
+      } : {}}
     >
       <div className="glass-card rounded-2xl p-4">
         <div className="flex items-center gap-4">
@@ -51,16 +56,16 @@ export default function StreakBanner({ currentStreak, longestStreak }) {
             {currentStreak > 0 ? (
               <>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-text tabular-nums">
+                  <span className="text-3xl font-black gold-text tabular-nums">
                     {currentStreak}
                   </span>
-                  <span className="text-sm text-text-secondary">
-                    {currentStreak === 1 ? 'giorno' : 'giorni'} consecutivi
+                  <span className="text-sm" style={{ color: '#958DA1' }}>
+                    {currentStreak === 1 ? 'giorno' : 'giorni'} di fila
                   </span>
                 </div>
                 {longestStreak > currentStreak && (
-                  <p className="text-xs text-text-secondary/70 mt-0.5">
-                    Record: {longestStreak} giorni
+                  <p className="text-xs mt-0.5" style={{ color: '#958DA1' }}>
+                    ⚡ Record: {longestStreak} giorni
                   </p>
                 )}
               </>
@@ -80,16 +85,17 @@ export default function StreakBanner({ currentStreak, longestStreak }) {
         {/* Progress bar to next badge */}
         {nextThreshold && currentStreak > 0 && (
           <div className="mt-3">
-            <div className="flex justify-between text-xs text-text-secondary mb-1.5">
-              <span>Prossimo badge</span>
-              <span>{currentStreak}/{nextThreshold} giorni</span>
+            <div className="flex justify-between mb-1.5" style={{ fontSize: '0.7rem', color: '#958DA1' }}>
+              <span>Prossimo badge streak</span>
+              <span style={{ color: '#FFB95F' }}>{currentStreak}/{nextThreshold} 🏅</span>
             </div>
-            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <div className="progress-track">
               <motion.div
+                className="progress-fill"
+                style={{ background: 'linear-gradient(90deg, #FFB95F, #EE9800)' }}
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
-                className="h-full rounded-full bg-gradient-to-r from-accent to-primary"
+                transition={{ duration: 0.9, ease: 'easeOut', delay: 0.3 }}
               />
             </div>
           </div>
