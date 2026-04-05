@@ -4,6 +4,10 @@ import { updateTask } from '../lib/taskService';
 
 const SWIPE_THRESHOLD = -70;
 
+const generateId = () => {
+  return crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
+};
+
 function DifficultyBadge({ difficulty }) {
   if (!difficulty) return null;
   if (difficulty === 'hard') {
@@ -19,8 +23,20 @@ function DeadlineChip({ deadline }) {
   if (!deadline) return null;
   const date = new Date(deadline);
   const label = date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+  
+  // Phase 6: Deadline Colors
+  const todayStr = new Date().toISOString().split('T')[0];
+  const deadlineStr = date.toISOString().split('T')[0];
+  
+  let chipClass = "chip-deadline";
+  if (deadlineStr < todayStr) {
+    chipClass += " expired"; // Rosso
+  } else if (deadlineStr === todayStr) {
+    chipClass += " due-today"; // Arancione
+  }
+
   return (
-    <span className="chip-deadline">
+    <span className={chipClass}>
       ⏰ {label}
     </span>
   );
@@ -29,6 +45,7 @@ function DeadlineChip({ deadline }) {
 export default function TaskItem({ task, onToggle, onDelete }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [newSubtaskDeadline, setNewSubtaskDeadline] = useState('');
 
   const controls = useAnimation();
   const x = useMotionValue(0);
@@ -50,6 +67,16 @@ export default function TaskItem({ task, onToggle, onDelete }) {
   const hasSubtasks = subtasks.length > 0;
   const completedSubtasksCount = subtasks.filter((st) => st.completed).length;
   const subtasksPercent = hasSubtasks ? Math.round((completedSubtasksCount / subtasks.length) * 100) : 0;
+
+  // Logic B: Check for deadline anomalies (solo per progetti)
+  const maxSubtaskDeadline = subtasks.reduce((max, st) => (!max || (st.deadline && st.deadline > max) ? st.deadline : max), null);
+  const hasDeadlineAnomaly = task.type === 'project' && task.deadline && maxSubtaskDeadline && maxSubtaskDeadline > task.deadline;
+
+  const handleAlignDeadline = async () => {
+    if (maxSubtaskDeadline) {
+      await updateTask(task.id, { deadline: maxSubtaskDeadline });
+    }
+  };
 
   // Toggle singola voce sub-task
   const handleToggleSubtask = async (subId, currentlyCompleted) => {
@@ -76,13 +103,18 @@ export default function TaskItem({ task, onToggle, onDelete }) {
     if (!newSubtaskTitle.trim()) return;
 
     const newSt = {
-      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+      id: generateId(),
       title: newSubtaskTitle.trim(),
       completed: false
     };
 
+    if (task.type === 'project' && newSubtaskDeadline) {
+      newSt.deadline = newSubtaskDeadline;
+    }
+
     const newSubtasks = [...subtasks, newSt];
     setNewSubtaskTitle('');
+    setNewSubtaskDeadline('');
     
     // Se c'erano tutti completati e ne aggiungo uno nuovo, la task NON deve riaprirsi in automatico a meno
     // che non implementiamo quella logica. Essendo Fase 1, se la task è completata la lascio completata ma 
@@ -199,6 +231,16 @@ export default function TaskItem({ task, onToggle, onDelete }) {
 
             {/* Meta row + subtasks summary se non espanso */}
             <div className="flex items-center flex-wrap gap-1.5 mt-2">
+              {task.type === 'habit' && (
+                <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-md flex items-center gap-1" style={{ background: 'rgba(59,130,246,0.15)', color: '#60A5FA', border: '1px solid rgba(59,130,246,0.25)' }}>
+                  🔄 Abitudine
+                </span>
+              )}
+              {task.type === 'project' && (
+                <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded-md flex items-center gap-1" style={{ background: 'rgba(234,179,8,0.15)', color: '#FBBF24', border: '1px solid rgba(234,179,8,0.25)' }}>
+                  👑 Progetto
+                </span>
+              )}
               {hasMeta && !isCompleted && (
                 <>
                   <DifficultyBadge difficulty={task.difficulty} />
@@ -248,13 +290,30 @@ export default function TaskItem({ task, onToggle, onDelete }) {
                   </div>
                 )}
 
+                {/* Logic B: Avvertimento Top-Down Anomalia Scadenze */}
+                {hasDeadlineAnomaly && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+                    className="mb-3 px-3 py-2 rounded-lg flex flex-col sm:flex-row items-center gap-2 justify-between"
+                    style={{ background: 'rgba(255, 180, 171, 0.1)', border: '1px solid rgba(255, 180, 171, 0.2)' }}
+                  >
+                    <span className="text-xs font-semibold text-[#FFB4AB]">⚠️ Una tappa supera la scadenza del progetto.</span>
+                    <button 
+                      onClick={handleAlignDeadline}
+                      className="shrink-0 text-[0.65rem] uppercase tracking-wider font-bold px-2 py-1 bg-[#FFB4AB] text-[#090E1C] rounded shadow hover:scale-105 transition-transform"
+                    >
+                      Allinea al {new Date(maxSubtaskDeadline).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                    </button>
+                  </motion.div>
+                )}
+
                 {/* Subtasks List */}
                 <div className="space-y-2.5 px-1 mb-4">
                   {subtasks.map((st) => (
                     <div key={st.id} className="flex items-center gap-3">
                       <button
                         onClick={() => handleToggleSubtask(st.id, st.completed)}
-                        className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors ${
+                        className={`w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors shrink-0 ${
                           st.completed ? 'bg-[#7C3AED] border-[#7C3AED]' : 'border-[rgba(210,187,255,0.2)] bg-transparent'
                         }`}
                       >
@@ -264,29 +323,45 @@ export default function TaskItem({ task, onToggle, onDelete }) {
                            </svg>
                         )}
                       </button>
-                      <span 
-                        className={`text-sm flex-1 transition-all ${st.completed ? 'line-through opacity-50' : ''}`}
-                        style={{ color: st.completed ? '#958DA1' : '#CCC3D8' }}
-                      >
-                        {st.title}
-                      </span>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span 
+                          className={`text-sm transition-all truncate leading-tight ${st.completed ? 'line-through opacity-50' : ''}`}
+                          style={{ color: st.completed ? '#958DA1' : '#CCC3D8' }}
+                        >
+                          {st.title}
+                        </span>
+                        {task.type === 'project' && st.deadline && (
+                          <span className={`text-[0.65rem] flex items-center gap-0.5 mt-0.5 ${st.deadline > task.deadline ? 'text-[#FFB4AB]' : 'text-[#958DA1]'}`}>
+                            📅 {new Date(st.deadline).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
 
                 {/* Add Subtask Input */}
-                <form onSubmit={handleAddSubtask} className="flex items-center gap-2 pl-1">
-                  <span className="text-[#958DA1] text-lg font-light leading-none">+</span>
+                <form onSubmit={handleAddSubtask} className="flex items-center gap-2 pl-1 pr-1 flex-wrap">
+                  <span className="text-[#958DA1] text-lg font-light leading-none shrink-0">+</span>
                   <input
                     type="text"
                     value={newSubtaskTitle}
                     onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                    placeholder="Aggiungi voce..."
-                    className="bg-transparent border-none outline-none text-sm w-full placeholder-[#958DA1]/60"
+                    placeholder="Aggiungi tappa..."
+                    className="bg-transparent border-none outline-none text-sm flex-1 min-w-0 placeholder-[#958DA1]/60"
                     style={{ color: '#DEE1F7' }}
                   />
+                  {task.type === 'project' && (
+                    <input
+                      type="date"
+                      value={newSubtaskDeadline}
+                      onChange={(e) => setNewSubtaskDeadline(e.target.value)}
+                      className="bg-[rgba(255,255,255,0.04)] border border-[rgba(210,187,255,0.12)] rounded-lg px-2 text-xs h-7 text-[#DEE1F7] focus:outline-none focus:border-[#7C3AED]/50 transition-colors shrink-0"
+                      style={{ colorScheme: 'dark' }}
+                    />
+                  )}
                   {newSubtaskTitle.trim() && (
-                    <button type="submit" className="text-xs font-bold shrink-0" style={{ color: '#D2BBFF' }}>
+                    <button type="submit" className="text-xs font-bold shrink-0 px-2 py-1" style={{ color: '#D2BBFF' }}>
                       Aggiungi
                     </button>
                   )}

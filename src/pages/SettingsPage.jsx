@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const PREFS_KEY = 'gtt_preferences';
@@ -19,6 +20,7 @@ function savePrefs(prefs) {
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [prefs, setPrefs] = useState(loadPrefs);
 
   useEffect(() => {
@@ -73,6 +75,26 @@ export default function SettingsPage() {
           checked={prefs.animations}
           onChange={() => togglePref('animations')}
         />
+      </div>
+
+      {/* Risorse Section */}
+      <div className="glass-card glow-hover rounded-2xl p-6 mb-4">
+        <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Risorse</h2>
+        <button
+          onClick={() => navigate('/guide')}
+          className="w-full flex items-center justify-between py-3 px-1 text-left group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl">📖</span>
+            <div>
+              <p className="text-sm font-medium text-text">Manuale d'uso</p>
+              <p className="text-xs text-text-secondary">Scopri come funzionano XP, Streak e Shop</p>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#958DA1] group-hover:text-[#D2BBFF] transition-colors shrink-0">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
       </div>
 
       {/* App Info Section */}

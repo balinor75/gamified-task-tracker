@@ -10,13 +10,14 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { todayKey, toDateKey } from './dateUtils';
 
 const TASKS = 'tasks';
 
 /**
  * Add a new task for the authenticated user.
  */
-export async function addTask(uid, title, difficulty = 'easy', deadline = null) {
+export async function addTask(uid, title, difficulty = 'easy', deadline = null, type = 'task') {
   return addDoc(collection(db, TASKS), {
     title: title.trim(),
     user_id: uid,
@@ -25,7 +26,8 @@ export async function addTask(uid, title, difficulty = 'easy', deadline = null) 
     completed_at: null,
     difficulty, // Phase 2
     deadline,   // Phase 2
-    subtasks: [], // Phase 1: Support for complex missions
+    subtasks: [], // Phase 1
+    type,       // Phase 4: 'task' | 'habit'
   });
 }
 
@@ -70,6 +72,7 @@ export async function deleteTask(taskId) {
 
 /**
  * Subscribe to real-time updates for a user's tasks.
+ * Applies "Lazy Reset" to habits completed on previous days.
  * Returns an unsubscribe function.
  */
 export function subscribeTasks(uid, callback) {
@@ -80,21 +83,38 @@ export function subscribeTasks(uid, callback) {
   return onSnapshot(
     q,
     (snapshot) => {
-      const tasks = snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
+      const today = todayKey();
+      
+      const tasks = snapshot.docs.map((d) => {
+        let data = d.data();
+        let isCompleted = data.completed;
+        
+        // Lazy-Reset for habits
+        if (data.type === 'habit' && isCompleted && data.completed_at) {
+          const completedDate = toDateKey(data.completed_at);
+          if (completedDate !== today) {
+            isCompleted = false; // Override client-side
+          }
+        }
+
+        return {
+          id: d.id,
+          ...data,
+          completed: isCompleted // Injected mutated completed status
+        };
+      });
+      
       // Sort client-side: newest first (avoids composite index requirement)
       tasks.sort((a, b) => {
         const ta = a.created_at?.toMillis?.() ?? 0;
         const tb = b.created_at?.toMillis?.() ?? 0;
         return tb - ta;
       });
+      
       callback(tasks);
     },
     (error) => {
       console.error('Tasks subscription error:', error);
-      // Return empty list so the UI doesn't hang on spinner
       callback([]);
     }
   );

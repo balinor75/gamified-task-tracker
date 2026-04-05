@@ -6,14 +6,16 @@ export default function TaskInput({ onAdd }) {
   const [isFocused, setIsFocused] = useState(false);
   const [difficulty, setDifficulty] = useState('easy');
   const [deadline, setDeadline] = useState('');
+  const [type, setType] = useState('task');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (title.trim()) {
-      onAdd(title.trim(), difficulty, deadline || null);
+      onAdd(title.trim(), difficulty, deadline || null, type);
       setTitle('');
       setDifficulty('easy');
       setDeadline('');
+      setType('task');
       setIsFocused(false);
     }
   };
@@ -45,13 +47,12 @@ export default function TaskInput({ onAdd }) {
         }`}
         style={{ borderWidth: '1px', borderStyle: 'solid' }}
       >
-        {/* riga input */}
         <div className="relative flex items-center">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Aggiungi un nuovo task..."
+            placeholder="Aggiungi un nuovo task o abitudine..."
             className="w-full bg-transparent py-4 pl-4 pr-14 text-[#DEE1F7] placeholder-[#CCC3D8]/50 focus:outline-none transition-all duration-300"
           />
           <motion.button
@@ -77,67 +78,121 @@ export default function TaskInput({ onAdd }) {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden bg-[rgba(25,23,37,0.7)] border-t border-[rgba(210,187,255,0.06)]"
             >
-              <div className="p-3 pl-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-wrap">
-                
-                {/* Difficoltà */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider shrink-0">Difficoltà:</span>
-                  <div className="flex flex-wrap gap-1">
+                <div className="pt-4 pb-2 px-2 border-t border-white/5 flex flex-col gap-4 mt-2">
+                  
+                  {/* Selettore Type (Task vs Habit vs Project) */}
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
-                      onClick={() => setDifficulty('easy')}
-                      className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
-                        difficulty === 'easy'
-                          ? 'bg-[rgba(110,231,183,0.12)] text-[#6EE7B7] border border-[rgba(110,231,183,0.2)]'
-                          : 'text-[#CCC3D8] hover:bg-white/5 opacity-60'
+                      onClick={() => { setType('task'); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        type === 'task' 
+                          ? 'bg-white/10 text-white' 
+                          : 'bg-transparent text-[#958DA1] hover:bg-white/5'
                       }`}
                     >
-                      Facile
+                      🎯 Singola Missione
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDifficulty('medium')}
-                      className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
-                        difficulty === 'medium'
-                          ? 'bg-[rgba(255,185,95,0.12)] text-[#FFB95F] border border-[rgba(255,185,95,0.2)]'
-                          : 'text-[#CCC3D8] hover:bg-white/5 opacity-60'
+                      onClick={() => { setType('habit'); setDeadline(''); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                        type === 'habit' 
+                          ? 'bg-[rgba(59,130,246,0.15)] text-[#60A5FA] border border-[rgba(59,130,246,0.25)]' 
+                          : 'bg-transparent text-[#958DA1] hover:bg-white/5'
                       }`}
                     >
-                      Media
+                      🔄 Abitudine Quotidiana
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDifficulty('hard')}
-                      className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
-                        difficulty === 'hard'
-                          ? 'bg-[rgba(255,180,171,0.12)] text-[#FFB4AB] border border-[rgba(255,180,171,0.2)]'
-                          : 'text-[#CCC3D8] hover:bg-white/5 opacity-60'
+                      onClick={() => { setType('project'); }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                        type === 'project' 
+                          ? 'bg-[rgba(234,179,8,0.15)] text-[#FBBF24] border border-[rgba(234,179,8,0.25)]' 
+                          : 'bg-transparent text-[#958DA1] hover:bg-white/5'
                       }`}
                     >
-                      Difficile
+                      👑 Progetto Master
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-wrap">
+                    <div className="flex flex-wrap items-center gap-4">
+                      
+                      {/* Difficoltà */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider shrink-0">Difficoltà:</span>
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setDifficulty('easy')}
+                            className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+                              difficulty === 'easy'
+                                ? 'bg-[rgba(110,231,183,0.12)] text-[#6EE7B7] border border-[rgba(110,231,183,0.2)]'
+                                : 'text-[#CCC3D8] hover:bg-white/5 opacity-60'
+                            }`}
+                          >
+                            Facile
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDifficulty('medium')}
+                            className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+                              difficulty === 'medium'
+                                ? 'bg-[rgba(255,185,95,0.12)] text-[#FFB95F] border border-[rgba(255,185,95,0.2)]'
+                                : 'text-[#CCC3D8] hover:bg-white/5 opacity-60'
+                            }`}
+                          >
+                            Media
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDifficulty('hard')}
+                            className={`px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+                              difficulty === 'hard'
+                                ? 'bg-[rgba(255,180,171,0.12)] text-[#FFB4AB] border border-[rgba(255,180,171,0.2)]'
+                                : 'text-[#CCC3D8] hover:bg-white/5 opacity-60'
+                            }`}
+                          >
+                            Difficile
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Scadenza (solo se non è una habit) */}
+                      {type !== 'habit' && (
+                        <div className="flex flex-wrap items-center gap-2 max-w-full">
+                          <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider shrink-0">Scadenza:</span>
+                          <div className="flex items-center gap-1 min-w-0">
+                            <input
+                              type="date"
+                              value={deadline}
+                              onChange={(e) => setDeadline(e.target.value)}
+                              className="bg-[rgba(255,255,255,0.04)] border border-[rgba(210,187,255,0.12)] rounded-lg px-2 py-1 text-xs text-[#DEE1F7] focus:outline-none focus:border-[#7C3AED]/50 transition-colors max-w-[130px] sm:max-w-none"
+                              style={{ colorScheme: 'dark' }}
+                            />
+                            {deadline && (
+                               <button type="button" onClick={() => setDeadline('')} className="text-[#FFB4AB] opacity-80 hover:opacity-100 transition-opacity">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                               </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      disabled={!title.trim()}
+                      className="px-5 py-2 min-h-[36px] bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-50 
+                                disabled:hover:bg-[#7C3AED] text-white rounded-xl font-bold text-sm 
+                                transition-colors shadow-lg shadow-[#7C3AED]/20 flex items-center justify-center min-w-[80px]"
+                    >
+                      + Aggiungi
                     </button>
                   </div>
                 </div>
-
-                {/* Scadenza */}
-                <div className="flex flex-wrap items-center gap-2 max-w-full">
-                  <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider shrink-0">Scadenza:</span>
-                  <div className="flex items-center gap-1 min-w-0">
-                    <input
-                      type="date"
-                      value={deadline}
-                      onChange={(e) => setDeadline(e.target.value)}
-                      className="bg-[rgba(255,255,255,0.04)] border border-[rgba(210,187,255,0.12)] rounded-lg px-2 py-1 text-xs text-[#DEE1F7] focus:outline-none focus:border-[#7C3AED]/50 transition-colors max-w-[130px] sm:max-w-none"
-                    />
-                    {deadline && (
-                       <button type="button" onClick={() => setDeadline('')} className="text-[#FFB4AB] opacity-80 hover:opacity-100 transition-opacity">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                       </button>
-                    )}
-                  </div>
-                </div>
-
-              </div>
             </motion.div>
           )}
         </AnimatePresence>

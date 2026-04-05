@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useStatsStore from '../stores/useStatsStore';
 import { useAuth } from '../contexts/AuthContext';
-import { buyItem } from '../lib/shopService';
+import { buyItem, consumeItem, getCustomRewards, createCustomReward, deleteCustomReward } from '../lib/shopService';
 
 const SHOP_ITEMS = [
   { id: 'health_potion', name: 'Pozione Curativa', desc: 'Ripristina uno Streak perso.', price: 50, icon: '🍷', color: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.3)', textColor: '#FCA5A5' },
@@ -15,21 +15,52 @@ export default function ShopPage() {
   const coins = useStatsStore(state => state.coins);
   const inventory = useStatsStore(state => state.inventory);
   
+  const [tab, setTab] = useState('negozio'); // 'negozio' | 'desideri' | 'zaino'
   const [buyingId, setBuyingId] = useState(null);
   const [errorId, setErrorId] = useState(null);
+  
+  const [customRewards, setCustomRewards] = useState([]);
+  const [loadingCustom, setLoadingCustom] = useState(false);
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newPrice, setNewPrice] = useState('100');
 
-  const handleBuy = async (item) => {
+  const loadCustomRewards = useCallback(async () => {
     if (!user) return;
-    
+    setLoadingCustom(true);
+    try {
+      const data = await getCustomRewards(user.uid);
+      setCustomRewards(data);
+    } catch (e) {
+      console.error(e);
+    }
+    setLoadingCustom(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (tab === 'desideri') {
+      loadCustomRewards();
+    }
+  }, [tab, loadCustomRewards]);
+
+  const handleBuy = async (item, isCustom = false) => {
+    if (!user) return;
     if (coins < item.price) {
       setErrorId(item.id);
-      setTimeout(() => setErrorId(null), 500); // Reset shake after 500ms
+      setTimeout(() => setErrorId(null), 500);
       return;
     }
-
     setBuyingId(item.id);
     try {
-      await buyItem(user.uid, item.id, item.price);
+      if (isCustom) {
+        // Se è custom, non c'è logica di check item esistente nello shopService, 
+        // buyItem accetta {id, price}
+        // Ma wait: buyItem di shopService (Phase 3) usa itemId. 
+        // Funziona con qualsiasi itemId stringa (crea una entry in inventory).
+        await buyItem(user.uid, item.id, item.price);
+      } else {
+        await buyItem(user.uid, item.id, item.price);
+      }
     } catch (e) {
       console.error(e);
       setErrorId(item.id);
@@ -39,15 +70,35 @@ export default function ShopPage() {
     }
   };
 
+  const handleConsume = async (itemId) => {
+    if (!user) return;
+    try {
+      await consumeItem(user.uid, itemId, false);
+      // Eventualmente suoni / alert
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleCreateCustom = async (e) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newPrice) return;
+    try {
+      await createCustomReward(user.uid, newTitle.trim(), newPrice, '🎁');
+      setNewTitle('');
+      setNewPrice('100');
+      setShowAddCustom(false);
+      loadCustomRewards();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="p-4 pb-28">
       {/* ── Header ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-      >
-        <div className="flex items-center justify-between mb-8 pt-1">
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+        <div className="flex items-center justify-between mb-4 pt-1">
           <h1 className="text-2xl font-bold" style={{ color: '#DEE1F7' }}>
             🏪 Bottega
           </h1>
@@ -68,75 +119,144 @@ export default function ShopPage() {
           </motion.span>
         </div>
 
-        {/* ── Grid Items ── */}
-        <div className="flex flex-col gap-4">
-          {SHOP_ITEMS.map((item, index) => {
-            const qty = inventory[item.id]?.quantity || 0;
-            const canAfford = coins >= item.price;
-            const isError = errorId === item.id;
-            const isBuying = buyingId === item.id;
-
-            return (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                className="relative overflow-hidden rounded-2xl p-4 flex items-center justify-between"
-                style={{
-                  background: 'rgba(25,23,37,0.7)',
-                  border: `1px solid rgba(255,255,255,0.05)`,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-                }}
-              >
-                <div className="flex items-center gap-4">
-                  <div 
-                    className="w-12 h-12 flex items-center justify-center rounded-xl text-2xl shrink-0"
-                    style={{ background: item.color, border: `1px solid ${item.border}` }}
-                  >
-                    {item.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm" style={{ color: item.textColor }}>{item.name}</h3>
-                    <p className="text-xs mt-1" style={{ color: '#958DA1' }}>{item.desc}</p>
-                    {qty > 0 && (
-                      <div className="text-[10px] font-bold mt-1.5 uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                        Possiedi: {qty}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <motion.button
-                  animate={isError ? { x: [-5, 5, -5, 5, 0] } : {}}
-                  transition={{ duration: 0.3 }}
-                  onClick={() => handleBuy(item)}
-                  disabled={isBuying}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs transition-all relative overflow-hidden group"
-                  style={{
-                    background: canAfford ? 'rgba(238,152,0,0.15)' : 'rgba(255,255,255,0.05)',
-                    color: canAfford ? '#FFB95F' : 'rgba(255,255,255,0.3)',
-                    border: `1px solid ${canAfford ? 'rgba(238,152,0,0.25)' : 'transparent'}`,
-                  }}
-                >
-                  {/* Effetto hover per button acquistabile */}
-                  {canAfford && !isBuying && (
-                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                  )}
-
-                  {isBuying ? (
-                    <span className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#FFB95F', borderTopColor: 'transparent' }}></span>
-                  ) : (
-                    <>
-                      <span>🪙</span>
-                      <span>{item.price}</span>
-                    </>
-                  )}
-                </motion.button>
-              </motion.div>
-            );
-          })}
+        {/* ── Tabs ── */}
+        <div className="flex bg-[rgba(26,31,47,0.7)] rounded-xl p-1 mb-6 border border-[rgba(210,187,255,0.08)] backdrop-blur-md">
+          {['negozio', 'desideri', 'zaino'].map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 text-xs sm:text-sm font-bold uppercase tracking-wider py-2 rounded-lg transition-colors ${
+                tab === t ? 'bg-[#7C3AED] text-white shadow-md' : 'text-[#958DA1] hover:bg-white/5'
+              }`}
+            >
+              {t === 'negozio' ? 'Sistema' : t === 'desideri' ? 'Desideri' : 'Zaino'}
+            </button>
+          ))}
         </div>
+
+        {/* ── Content ── */}
+        <AnimatePresence mode="wait">
+          {tab === 'negozio' && (
+            <motion.div key="negozio" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-4">
+              {SHOP_ITEMS.map((item) => {
+                const canAfford = coins >= item.price;
+                const isError = errorId === item.id;
+                const isBuying = buyingId === item.id;
+
+                return (
+                  <div key={item.id} className="relative overflow-hidden rounded-2xl p-4 flex items-center justify-between" style={{ background: 'rgba(25,23,37,0.7)', border: `1px solid rgba(255,255,255,0.05)`, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 flex items-center justify-center rounded-xl text-2xl shrink-0" style={{ background: item.color, border: `1px solid ${item.border}` }}>
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm" style={{ color: item.textColor }}>{item.name}</h3>
+                        <p className="text-xs mt-1" style={{ color: '#958DA1' }}>{item.desc}</p>
+                      </div>
+                    </div>
+                    <motion.button animate={isError ? { x: [-5, 5, -5, 5, 0] } : {}} onClick={() => handleBuy(item)} disabled={isBuying} className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs transition-all relative overflow-hidden group" style={{ background: canAfford ? 'rgba(238,152,0,0.15)' : 'rgba(255,255,255,0.05)', color: canAfford ? '#FFB95F' : 'rgba(255,255,255,0.3)', border: `1px solid ${canAfford ? 'rgba(238,152,0,0.25)' : 'transparent'}` }}>
+                      {isBuying ? <span className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#FFB95F', borderTopColor: 'transparent' }}></span> : <><span>🪙</span><span>{item.price}</span></>}
+                    </motion.button>
+                  </div>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {tab === 'desideri' && (
+            <motion.div key="desideri" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-4">
+              <button onClick={() => setShowAddCustom(!showAddCustom)} className="w-full py-3 rounded-xl border border-dashed border-[#7C3AED]/40 text-[#D2BBFF] text-sm font-bold bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 transition-colors uppercase tracking-wider flex items-center justify-center gap-2">
+                {showAddCustom ? 'Annulla' : '+ Crea Nuovo Desiderio'}
+              </button>
+
+              <AnimatePresence>
+                {showAddCustom && (
+                  <motion.form initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} onSubmit={handleCreateCustom} className="overflow-hidden mb-2 bg-[#1A1F2F] p-4 rounded-2xl border border-[rgba(210,187,255,0.1)]">
+                    <div className="flex flex-col gap-3">
+                      <input type="text" placeholder="Nome Desiderio (es. Pizza, Film)" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7C3AED] text-white" />
+                      <div className="flex items-center gap-3">
+                        <span className="text-[#FFB95F] shrink-0 font-bold">🪙 Costo:</span>
+                        <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} min="10" className="flex-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7C3AED] text-[#FFB95F] font-bold" />
+                      </div>
+                      <button type="submit" className="mt-2 bg-[#7C3AED] text-white font-bold py-2 rounded-lg text-sm shadow-lg hover:bg-[#6D28D9] transition-colors">
+                        Salva Desiderio
+                      </button>
+                    </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+
+              {loadingCustom ? (
+                <div className="text-center text-sm text-[#958DA1] py-8">Caricamento...</div>
+              ) : customRewards.length === 0 ? (
+                <div className="text-center text-sm text-[#958DA1] py-8 border border-dashed border-white/5 rounded-xl">
+                  Nessun desiderio creato.
+                </div>
+              ) : (
+                customRewards.map((reward) => (
+                  <div key={reward.id} className="relative overflow-hidden rounded-2xl p-4 flex items-center justify-between" style={{ background: 'rgba(25,23,37,0.7)', border: `1px solid rgba(255,255,255,0.05)` }}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 flex items-center justify-center rounded-xl text-2xl shrink-0" style={{ background: 'rgba(210,187,255,0.1)', border: '1px solid rgba(210,187,255,0.2)' }}>{reward.icon || '🎁'}</div>
+                      <div>
+                        <h3 className="font-bold text-sm text-[#DEE1F7]">{reward.name}</h3>
+                        <p className="text-xs mt-1" style={{ color: '#958DA1' }}>Ricompensa personale</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <button onClick={() => deleteCustomReward(reward.id).then(loadCustomRewards)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20">
+                         ×
+                       </button>
+                       <button onClick={() => handleBuy(reward, true)} disabled={buyingId === reward.id} className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs" style={{ background: coins >= reward.price ? 'rgba(238,152,0,0.15)' : 'rgba(255,255,255,0.05)', color: coins >= reward.price ? '#FFB95F' : 'rgba(255,255,255,0.3)' }}>
+                         <span>🪙</span><span>{reward.price}</span>
+                       </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </motion.div>
+          )}
+
+          {tab === 'zaino' && (
+            <motion.div key="zaino" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-4">
+              {Object.keys(inventory).length === 0 ? (
+                <div className="text-center text-sm text-[#958DA1] py-12 border border-dashed border-white/5 rounded-xl">
+                  Il tuo zaino è vuoto.
+                </div>
+              ) : (
+                Object.entries(inventory).map(([id, invItem]) => {
+                  if (!invItem || invItem.quantity <= 0) return null;
+                  const shopData = SHOP_ITEMS.find(s => s.id === id);
+                  // Custom reward se null? Possiamo recuperare custom o solo per i base
+                  // Per semplicità se custom usa fallback
+                  const icon = shopData?.icon || '🎁';
+                  const name = shopData?.name || `Custom Reward (${id.substring(0,4)})`;
+                  const color = shopData?.color || 'rgba(210,187,255,0.1)';
+                  const border = shopData?.border || 'rgba(210,187,255,0.2)';
+                  
+                  return (
+                    <div key={id} className="relative overflow-hidden rounded-2xl p-4 flex items-center justify-between" style={{ background: 'rgba(25,23,37,0.7)', border: `1px solid rgba(255,255,255,0.05)`, boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-12 h-12 flex items-center justify-center rounded-xl text-2xl shrink-0" style={{ background: color, border: `1px solid ${border}` }}>
+                          {icon}
+                          <span className="absolute -top-2 -right-2 bg-[#7C3AED] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#1A1F2F]">
+                            {invItem.quantity}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-sm text-[#DEE1F7]">{name}</h3>
+                        </div>
+                      </div>
+                      <button onClick={() => handleConsume(id)} className="px-4 py-2 bg-[#7C3AED] text-white font-bold text-xs rounded-xl shadow-[0_0_15px_rgba(124,58,237,0.4)] hover:bg-[#6D28D9] transition-transform hover:scale-105 uppercase tracking-wider">
+                        Usa
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </motion.div>
     </div>
   );

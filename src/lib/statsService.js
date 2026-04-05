@@ -8,51 +8,9 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { todayKey, yesterdayKey, toDateKey } from './dateUtils';
 
 const STATS_COL = 'user_stats';
-
-/**
- * Normalize a JS Date or Firestore Timestamp to a YYYY-MM-DD string
- * in the user's local timezone.
- */
-function toDateKey(dateOrTimestamp) {
-  let d;
-  if (dateOrTimestamp instanceof Timestamp) {
-    d = dateOrTimestamp.toDate();
-  } else if (dateOrTimestamp instanceof Date) {
-    d = dateOrTimestamp;
-  } else {
-    return null;
-  }
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-/**
- * Get today's date key in the user's local timezone.
- */
-function todayKey() {
-  const now = new Date();
-  // Use local date parts to avoid timezone drift
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-/**
- * Get yesterday's date key in the user's local timezone.
- */
-function yesterdayKey() {
-  const now = new Date();
-  now.setDate(now.getDate() - 1);
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 /**
  * Get or create the stats document for a user.
@@ -99,12 +57,17 @@ export async function updateStatsOnComplete(uid, task) {
       last_activity_date: null,
       coins: 0,
       inventory: {},
+      previous_streak: 0,
     };
   } else {
     stats = snap.data();
     // Migrazione al volo per vecchi documenti
-    if (stats.coins === undefined) stats.coins = 0;
-    if (stats.inventory === undefined) stats.inventory = {};
+    stats.current_streak = Number(stats.current_streak) || 0;
+    stats.longest_streak = Number(stats.longest_streak) || 0;
+    stats.total_completed = Number(stats.total_completed) || 0;
+    stats.coins = Number(stats.coins) || 0;
+    stats.inventory = stats.inventory || {};
+    stats.previous_streak = Number(stats.previous_streak) || 0;
   }
 
   const today = todayKey();
@@ -114,6 +77,7 @@ export async function updateStatsOnComplete(uid, task) {
     : null;
 
   let newStreak = stats.current_streak;
+  let newPreviousStreak = stats.previous_streak || 0;
 
   if (lastKey === today) {
     // Already completed a task today — streak unchanged
@@ -122,6 +86,9 @@ export async function updateStatsOnComplete(uid, task) {
     newStreak += 1;
   } else {
     // Gap or first activity — start new streak
+    if (stats.current_streak > 0) {
+      newPreviousStreak = stats.current_streak;
+    }
     newStreak = 1;
   }
 
@@ -133,6 +100,13 @@ export async function updateStatsOnComplete(uid, task) {
   if (task?.difficulty === 'medium') baseReward = 25;
   if (task?.difficulty === 'hard') baseReward = 50;
 
+  // Moltiplicatore Progetti (Phase 5)
+  if (task?.type === 'project') {
+    if (task?.difficulty === 'easy') baseReward *= 2;      // 20
+    else if (task?.difficulty === 'medium') baseReward *= 3; // 75
+    else if (task?.difficulty === 'hard') baseReward *= 4;   // 200
+  }
+
   let subtaskReward = 0;
   if (task?.subtasks && Array.isArray(task.subtasks)) {
     // Premiamo solo i sottotask completati
@@ -141,7 +115,19 @@ export async function updateStatsOnComplete(uid, task) {
   }
 
   const earnedCoins = baseReward + subtaskReward;
-  const newCoins = stats.coins + earnedCoins;
+  let finalCoins = earnedCoins;
+
+  // Moltiplicatore Elisir del Focus
+  if (stats.active_buffs && stats.active_buffs.double_xp_until) {
+    const doubleUntil = stats.active_buffs.double_xp_until.toMillis 
+      ? stats.active_buffs.double_xp_until.toMillis() 
+      : 0;
+    if (doubleUntil > Date.now()) {
+      finalCoins *= 2;
+    }
+  }
+
+  const newCoins = stats.coins + finalCoins;
 
   const updates = {
     current_streak: newStreak,
@@ -149,6 +135,7 @@ export async function updateStatsOnComplete(uid, task) {
     total_completed: newTotal,
     last_activity_date: serverTimestamp(),
     coins: newCoins,
+    previous_streak: newPreviousStreak,
   };
 
   if (!snap.exists()) {
@@ -179,9 +166,14 @@ export function subscribeStats(uid, callback) {
         const data = snap.data();
         callback({
           id: snap.id,
-          coins: data.coins || 0,
+          ...data,
+          current_streak: Number(data.current_streak) || 0,
+          longest_streak: Number(data.longest_streak) || 0,
+          total_completed: Number(data.total_completed) || 0,
+          coins: Number(data.coins) || 0,
           inventory: data.inventory || {},
-          ...data
+          previous_streak: Number(data.previous_streak) || 0,
+          active_buffs: data.active_buffs || null,
         });
       } else {
         callback({

@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import StatsPage from './pages/StatsPage';
 import SettingsPage from './pages/SettingsPage';
 import ShopPage from './pages/ShopPage';
+import GuidePage from './pages/GuidePage';
 import ReloadPrompt from './components/ReloadPrompt';
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="stats" element={<StatsPage />} />
             <Route path="shop" element={<ShopPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="guide" element={<GuidePage />} />
           </Route>
         </Routes>
       </AuthProvider>

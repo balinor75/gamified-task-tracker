@@ -58,15 +58,41 @@ export default function DashboardPage() {
   }, [tasks]);
 
   const filteredTasks = useMemo(() => {
-    if (filter === 'active') return tasks.filter(t => !t.completed);
-    if (filter === 'completed') return tasks.filter(t => t.completed);
-    return tasks;
+    let result = filter === 'active' 
+      ? tasks.filter(t => !t.completed) 
+      : filter === 'completed' 
+        ? tasks.filter(t => t.completed) 
+        : [...tasks];
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    const getPriority = (t) => {
+      if (!t.deadline) return 3;
+      const dStr = new Date(t.deadline).toISOString().split('T')[0];
+      if (dStr < todayStr) return 1;
+      if (dStr === todayStr) return 2;
+      return 3;
+    };
+
+    // Ordina non-abitudini
+    return result.sort((a, b) => {
+      if (a.type === 'habit' && b.type === 'habit') return 0;
+      
+      const pA = getPriority(a);
+      const pB = getPriority(b);
+      
+      if (pA !== pB) return pA - pB;
+      
+      if (a.deadline && b.deadline) {
+        return new Date(a.deadline) - new Date(b.deadline);
+      }
+      return 0;
+    });
   }, [tasks, filter]);
 
-  const handleAddTask = async (title, difficulty, deadline) => {
+  const handleAddTask = async (title, difficulty, deadline, type) => {
     if (!user) return;
     try {
-      await addTask(user.uid, title, difficulty, deadline);
+      await addTask(user.uid, title, difficulty, deadline, type);
     } catch (e) {
       console.error("Error adding task:", e);
     }
@@ -176,21 +202,103 @@ export default function DashboardPage() {
           <TaskFilter filter={filter} onChange={setFilter} counts={counts} />
         )}
 
-        {/* Task List */}
-        <div className="mt-4">
+        {/* ── Task List ── */}
+        <div className="space-y-8 mt-4">
           {loading && tasks.length === 0 ? (
             <TaskSkeleton />
           ) : filteredTasks.length > 0 ? (
-            <AnimatePresence mode="popLayout">
-              {filteredTasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  onToggle={handleToggleTask}
-                  onDelete={handleDeleteTask}
-                />
-              ))}
-            </AnimatePresence>
+            <>
+              {/* Abitudini */}
+              <div>
+                <h2 className="text-sm font-bold text-[#958DA1] uppercase tracking-wider mb-3 px-1 flex items-center gap-2">
+                  <span>🔄</span> Le Tue Abitudini
+                </h2>
+                <div className="space-y-4">
+                  <AnimatePresence mode="popLayout">
+                    {filteredTasks.filter(t => t.type === 'habit').length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-center py-6 text-[#958DA1] border border-dashed border-white/10 rounded-2xl bg-[#191725]/30"
+                      >
+                        <p className="text-sm">Nessuna abitudine qua.</p>
+                      </motion.div>
+                    ) : (
+                      filteredTasks.filter(t => t.type === 'habit').map(task => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          onToggle={handleToggleTask}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Progetti Master */}
+              <div>
+                <h2 className="text-sm font-bold text-[#958DA1] uppercase tracking-wider mb-3 px-1 flex items-center gap-2">
+                  <span>👑</span> Progetti Master
+                </h2>
+                <div className="space-y-4">
+                  <AnimatePresence mode="popLayout">
+                    {filteredTasks.filter(t => t.type === 'project').length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-center py-4 text-[#958DA1] border border-dashed border-white/10 rounded-2xl bg-[#191725]/30"
+                      >
+                        <p className="text-sm">Nessun progetto in corso.</p>
+                      </motion.div>
+                    ) : (
+                      filteredTasks.filter(t => t.type === 'project').map(task => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          onToggle={handleToggleTask}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Missioni */}
+              <div>
+                <h2 className="text-sm font-bold text-[#958DA1] uppercase tracking-wider mb-3 px-1 flex items-center gap-2">
+                  <span>🎯</span> Missioni Singole
+                </h2>
+                <div className="space-y-4">
+                  <AnimatePresence mode="popLayout">
+                    {filteredTasks.filter(t => t.type !== 'habit' && t.type !== 'project').length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="text-center py-8 text-[#958DA1] border border-dashed border-white/10 rounded-2xl bg-[#191725]/30"
+                      >
+                        <p>Nessuna missione da completare.</p>
+                        <p className="text-sm mt-1 opacity-75">Ottimo lavoro!</p>
+                      </motion.div>
+                    ) : (
+                      filteredTasks.filter(t => t.type !== 'habit' && t.type !== 'project').map(task => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          onToggle={handleToggleTask}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </>
           ) : (
             <EmptyState filter={filter} />
           )}
