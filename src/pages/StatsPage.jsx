@@ -3,12 +3,12 @@ import useStatsStore, { selectLevel, selectLevelProgress } from '../stores/useSt
 import { BADGES } from '../lib/badges';
 
 export default function StatsPage() {
-  const { currentStreak, longestStreak, totalCompleted, unlockedBadges, loading } = useStatsStore();
+  const { currentStreak, longestStreak, totalCompleted, unlockedBadges, loading, xp } = useStatsStore();
   const level = useStatsStore(selectLevel);
   const levelProgress = useStatsStore(selectLevelProgress);
+  const xpToNextLevel = 100 - (xp % 100);
 
   const unlockedSet = new Set(unlockedBadges);
-  const xpForNextLevel = 10 - (totalCompleted % 10);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -90,7 +90,7 @@ export default function StatsPage() {
               Esperienza
             </span>
             <span className="chip-xp">
-              ⚡ {xpForNextLevel} XP al prossimo livello
+              ⚡ {xpToNextLevel} XP al prossimo livello
             </span>
           </div>
           <div className="progress-track">
@@ -103,7 +103,7 @@ export default function StatsPage() {
           </div>
           <div className="flex justify-between mt-1">
             <span style={{ fontSize: '0.625rem', color: '#958DA1' }}>
-              {(totalCompleted % 10) * 10} / 100 XP
+              {xp % 100} / 100 XP
             </span>
             <span style={{ fontSize: '0.625rem', color: '#D2BBFF' }}>
               LVL {level + 1}

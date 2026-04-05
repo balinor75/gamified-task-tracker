@@ -71,36 +71,45 @@ export function calculateStatsUpdate(stats, task) {
   const newTotal = (Number(stats.total_completed) || 0) + 1;
   const newLongest = Math.max(Number(stats.longest_streak) || 0, newStreak);
 
-  // Reward calculation
-  let baseReward = 10;
-  if (task?.difficulty === 'medium') baseReward = 25;
-  if (task?.difficulty === 'hard') baseReward = 50;
+  // ── Calcolo Ricompense Finale Task ──
+  let baseCoins = 10;
+  let baseXP = 10; // Default Easy
+
+  if (task?.difficulty === 'medium') {
+    baseCoins = 25;
+    baseXP = 20;
+  } else if (task?.difficulty === 'hard') {
+    baseCoins = 50;
+    baseXP = 30;
+  }
 
   if (task?.type === 'project') {
-    if (task?.difficulty === 'easy') baseReward *= 2;
-    else if (task?.difficulty === 'medium') baseReward *= 3;
-    else if (task?.difficulty === 'hard') baseReward *= 4;
+    // Moltiplicatore monete rimosso in favore di un premio fisso generoso? 
+    // No, manteniamo la logica ma aggiungiamo l'XP bonus.
+    if (task?.difficulty === 'easy') baseCoins *= 2;
+    else if (task?.difficulty === 'medium') baseCoins *= 3;
+    else if (task?.difficulty === 'hard') baseCoins *= 4;
+    
+    baseXP += 50; // Bonus finale progetto
   }
 
-  let subtaskReward = 0;
-  if (task?.subtasks && Array.isArray(task.subtasks)) {
-    const completedSubtasks = task.subtasks.filter(st => st.completed).length;
-    subtaskReward = completedSubtasks * 5;
-  }
+  // Rimosso subtaskReward qui perché ora vengono assegnati immediatamente al toggle
+  let finalCoins = baseCoins;
+  let finalXP = baseXP;
 
-  let finalCoins = baseReward + subtaskReward;
-
-  // Focus Elixir Multiplier
+  // Buff Focus Elixir (raddoppia tutto)
   if (stats.active_buffs && stats.active_buffs.double_xp_until) {
     const doubleUntil = stats.active_buffs.double_xp_until.toMillis 
       ? stats.active_buffs.double_xp_until.toMillis() 
       : 0;
     if (doubleUntil > Date.now()) {
       finalCoins *= 2;
+      finalXP *= 2;
     }
   }
 
   const newCoins = (Number(stats.coins) || 0) + finalCoins;
+  const newXP = (Number(stats.xp) || 0) + finalXP;
 
   return {
     current_streak: newStreak,
@@ -108,6 +117,7 @@ export function calculateStatsUpdate(stats, task) {
     total_completed: newTotal,
     last_activity_date: serverTimestamp(),
     coins: newCoins,
+    xp: newXP,
     previous_streak: newPreviousStreak,
   };
 }
@@ -125,6 +135,7 @@ export async function updateStatsOnComplete(uid, task) {
       total_completed: 0,
       last_activity_date: null,
       coins: 0,
+      xp: 0,
       inventory: {},
       previous_streak: 0,
     };
@@ -160,6 +171,7 @@ export function subscribeStats(uid, callback) {
           longest_streak: Number(data.longest_streak) || 0,
           total_completed: Number(data.total_completed) || 0,
           coins: Number(data.coins) || 0,
+          xp: Number(data.xp) || 0,
           inventory: data.inventory || {},
           previous_streak: Number(data.previous_streak) || 0,
           active_buffs: data.active_buffs || null,
@@ -173,6 +185,7 @@ export function subscribeStats(uid, callback) {
           total_completed: 0,
           last_activity_date: null,
           coins: 0,
+          xp: 0,
           inventory: {},
         });
       }

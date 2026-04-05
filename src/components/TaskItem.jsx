@@ -1,6 +1,6 @@
 import { motion, AnimatePresence, useAnimation, useMotionValue, useTransform } from 'framer-motion';
 import { useRef, useState } from 'react';
-import { updateTask } from '../lib/taskService';
+import { updateTask, toggleSubtaskWithRewards } from '../lib/taskService';
 
 const SWIPE_THRESHOLD = -70;
 
@@ -42,7 +42,7 @@ function DeadlineChip({ deadline }) {
   );
 }
 
-export default function TaskItem({ task, onToggle, onDelete }) {
+export default function TaskItem({ task, user, onToggle, onDelete }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newSubtaskDeadline, setNewSubtaskDeadline] = useState('');
@@ -78,23 +78,30 @@ export default function TaskItem({ task, onToggle, onDelete }) {
     }
   };
 
-  // Toggle singola voce sub-task
   const handleToggleSubtask = async (subId, currentlyCompleted) => {
-    const newSubtasks = subtasks.map((st) =>
-      st.id === subId ? { ...st, completed: !currentlyCompleted } : st
-    );
+    if (!user) return;
+    
+    try {
+      // Usiamo la transazione atomica per premi/sostrazioni
+      await toggleSubtaskWithRewards(user.uid, task.id, subId);
+      
+      // La lista subtasks nello store verrà aggiornata tramite la subscription in DashboardPage,
+      // quindi non serve aggiornamento ottimistico manuale qui (anche se si potrebbe fare).
+      
+      // Controllo per auto-completamento (basato sui dati attuali for ora)
+      const isCompleting = !currentlyCompleted;
+      const willBeAllCompleted = subtasks.length > 0 && 
+        subtasks.every(st => st.id === subId ? isCompleting : st.completed);
 
-    // Controlla se tutti i subtasks ora sono completati
-    const allCompleted = newSubtasks.length > 0 && newSubtasks.every(st => st.completed);
-
-    // Aggiornamento ottimistico o base
-    await updateTask(task.id, { subtasks: newSubtasks });
-
-    // Se completati tutti, auto-completa la task genitore dopo un piccolo delay visivo
-    if (allCompleted && !isCompleted) {
-      setTimeout(() => {
-        onToggle(task.id, false, newSubtasks);
-      }, 500); // Diamo mezzo secondo all'utente per vedere la barretta arrivare al 100%
+      if (willBeAllCompleted && !isCompleted) {
+        setTimeout(() => {
+          onToggle(task.id, false, subtasks.map(st => 
+            st.id === subId ? { ...st, completed: true } : st
+          ));
+        }, 500);
+      }
+    } catch (e) {
+      console.error("Error toggling subtask:", e);
     }
   };
 

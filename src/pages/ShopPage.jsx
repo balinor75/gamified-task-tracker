@@ -20,6 +20,8 @@ export default function ShopPage() {
   
   const { tasks, subscribe: subscribeTasks, unsubscribe: unsubTasks } = useTaskStore();
   const [showTaskSelector, setShowTaskSelector] = useState(false);
+  const [selectedTaskForScroll, setSelectedTaskForScroll] = useState(null);
+  const [newScrollDate, setNewScrollDate] = useState('');
   const [showHealing, setShowHealing] = useState(false);
   
   const [tab, setTab] = useState('negozio'); // 'negozio' | 'desideri' | 'zaino'
@@ -66,10 +68,6 @@ export default function ShopPage() {
     setBuyingId(item.id);
     try {
       if (isCustom) {
-        // Se è custom, non c'è logica di check item esistente nello shopService, 
-        // buyItem accetta {id, price}
-        // Ma wait: buyItem di shopService (Phase 3) usa itemId. 
-        // Funziona con qualsiasi itemId stringa (crea una entry in inventory).
         await buyItem(user.uid, item.id, item.price);
       } else {
         await buyItem(user.uid, item.id, item.price);
@@ -86,8 +84,10 @@ export default function ShopPage() {
   const handleConsume = async (itemId) => {
     if (!user) return;
     
-    // Mostra selettore per resurrezione (non consumare item subito)
+    // Mostra selettore per pergamena (non consumare item subito)
     if (itemId === 'resurrect_scroll') {
+      setSelectedTaskForScroll(null);
+      setNewScrollDate('');
       setShowTaskSelector(true);
       return;
     }
@@ -249,8 +249,6 @@ export default function ShopPage() {
                 Object.entries(inventory).map(([id, invItem]) => {
                   if (!invItem || invItem.quantity <= 0) return null;
                   const shopData = SHOP_ITEMS.find(s => s.id === id);
-                  // Custom reward se null? Possiamo recuperare custom o solo per i base
-                  // Per semplicità se custom usa fallback
                   const icon = shopData?.icon || '🎁';
                   const name = shopData?.name || `Custom Reward (${id.substring(0,4)})`;
                   const color = shopData?.color || 'rgba(210,187,255,0.1)';
@@ -302,32 +300,58 @@ export default function ShopPage() {
                <div className="flex items-center gap-3 mb-4">
                  <span className="text-3xl">📜</span>
                  <div>
-                   <h3 className="font-bold text-lg text-[#FCD34D]">Usa Pergamena</h3>
-                   <p className="text-xs text-[#958DA1]">Seleziona il task da spostare a domani.</p>
+                   <h3 className="font-bold text-lg text-[#FCD34D]">Pergamena del Tempo</h3>
+                   <p className="text-xs text-[#958DA1]">
+                     {!selectedTaskForScroll 
+                       ? "Seleziona il task da modificare." 
+                       : `Modifica scadenza per: ${selectedTaskForScroll.title}`}
+                   </p>
                  </div>
                </div>
                
                <div className="max-h-60 overflow-y-auto space-y-2 mb-4 custom-scrollbar">
-                 {tasks.filter(t => !t.completed && t.type !== 'habit').length === 0 ? (
-                    <p className="text-sm text-[#958DA1] text-center py-4">Nessun task disponibile.</p>
+                 {!selectedTaskForScroll ? (
+                   tasks.filter(t => !t.completed && t.type !== 'habit').length === 0 ? (
+                      <p className="text-sm text-[#958DA1] text-center py-4">Nessun task disponibile.</p>
+                   ) : (
+                     tasks.filter(t => !t.completed && t.type !== 'habit').map(task => (
+                       <button
+                         key={task.id}
+                         onClick={() => {
+                           setSelectedTaskForScroll(task);
+                           setNewScrollDate(task.deadline || new Date().toISOString().split('T')[0]);
+                         }}
+                         className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex justify-between items-center"
+                       >
+                         <span className="text-sm font-medium text-white truncate pr-2">{task.title}</span>
+                         {task.deadline && <span className="text-[10px] text-[#958DA1] shrink-0">{task.deadline}</span>}
+                       </button>
+                     ))
+                   )
                  ) : (
-                   tasks.filter(t => !t.completed && t.type !== 'habit').map(task => (
-                     <button
-                       key={task.id}
-                       onClick={async () => {
-                         const tomorrow = new Date();
-                         tomorrow.setDate(tomorrow.getDate() + 1);
-                         const dl = tomorrow.toISOString().split('T')[0];
-                         await updateTask(task.id, { deadline: dl });
-                         await consumeItem(user.uid, 'resurrect_scroll', false);
-                         setShowTaskSelector(false);
-                       }}
-                       className="w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex justify-between items-center"
-                     >
-                       <span className="text-sm font-medium text-white truncate pr-2">{task.title}</span>
-                       {task.deadline && <span className="text-[10px] text-[#958DA1] shrink-0">{task.deadline}</span>}
-                     </button>
-                   ))
+                   <div className="space-y-4 py-2">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs text-[#958DA1] font-bold uppercase tracking-wider">Nuova Data</label>
+                        <input 
+                          type="date" 
+                          value={newScrollDate} 
+                          onChange={(e) => setNewScrollDate(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-[#FCD34D]"
+                        />
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (!newScrollDate) return;
+                          await updateTask(selectedTaskForScroll.id, { deadline: newScrollDate });
+                          await consumeItem(user.uid, 'resurrect_scroll', false);
+                          setShowTaskSelector(false);
+                          setSelectedTaskForScroll(null);
+                        }}
+                        className="w-full py-3 bg-[#F59E0B] text-black font-bold rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-[1.02] transition-transform"
+                      >
+                        Conferma Modifica
+                      </button>
+                   </div>
                  )}
                </div>
                

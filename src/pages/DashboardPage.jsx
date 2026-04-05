@@ -229,6 +229,7 @@ export default function DashboardPage() {
                         <TaskItem
                           key={task.id}
                           task={task}
+                          user={user}
                           onToggle={handleToggleTask}
                           onDelete={handleDeleteTask}
                         />
@@ -259,6 +260,7 @@ export default function DashboardPage() {
                         <TaskItem
                           key={task.id}
                           task={task}
+                          user={user}
                           onToggle={handleToggleTask}
                           onDelete={handleDeleteTask}
                         />
@@ -290,6 +292,7 @@ export default function DashboardPage() {
                         <TaskItem
                           key={task.id}
                           task={task}
+                          user={user}
                           onToggle={handleToggleTask}
                           onDelete={handleDeleteTask}
                         />

@@ -83,6 +83,7 @@ export async function completeTaskWithRewards(uid, taskId) {
       total_completed: 0,
       last_activity_date: null,
       coins: 0,
+      xp: 0,
       inventory: {},
     };
 
@@ -120,6 +121,62 @@ export async function updateTask(taskId, updates) {
  */
 export async function deleteTask(taskId) {
   return deleteDoc(doc(db, TASKS, taskId));
+}
+
+/**
+ * ATOMIC SUBTASK TOGGLE: Toggles a subtask and updates stats (2 XP, 5 Coins).
+ */
+export async function toggleSubtaskWithRewards(uid, taskId, subtaskId) {
+  const taskRef = doc(db, TASKS, taskId);
+  const statsRef = doc(db, 'user_stats', uid);
+
+  return await runTransaction(db, async (transaction) => {
+    // 1. Get Task
+    const taskSnap = await transaction.get(taskRef);
+    if (!taskSnap.exists()) throw new Error("Task not found");
+    const taskData = taskSnap.data();
+
+    // 2. Get Stats
+    const statsSnap = await transaction.get(statsRef);
+    const statsData = statsSnap.exists() ? statsSnap.data() : {
+      user_id: uid,
+      current_streak: 0,
+      longest_streak: 0,
+      total_completed: 0,
+      last_activity_date: null,
+      coins: 0,
+      xp: 0,
+      inventory: {},
+    };
+
+    // 3. Update Subtasks
+    let isCompleting = false;
+    const updatedSubtasks = taskData.subtasks.map(st => {
+      if (st.id === subtaskId) {
+        isCompleting = !st.completed;
+        return { ...st, completed: isCompleting };
+      }
+      return st;
+    });
+
+    // 4. Calculate Stats Change
+    const xpDiff = isCompleting ? 2 : -2;
+    const coinDiff = isCompleting ? 5 : -5;
+
+    const newXp = Math.max(0, (Number(statsData.xp) || 0) + xpDiff);
+    const newCoins = Math.max(0, (Number(statsData.coins) || 0) + coinDiff);
+
+    // 5. Apply Updates
+    transaction.update(taskRef, { subtasks: updatedSubtasks });
+    
+    if (!statsSnap.exists()) {
+      transaction.set(statsRef, { ...statsData, xp: newXp, coins: newCoins });
+    } else {
+      transaction.update(statsRef, { xp: newXp, coins: newCoins });
+    }
+
+    return { xp: newXp, coins: newCoins };
+  });
 }
 
 /**

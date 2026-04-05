@@ -33,6 +33,7 @@ const useStatsStore = create((set, get) => ({
         totalCompleted: stats.total_completed,
         lastActivityDate: stats.last_activity_date,
         coins: stats.coins,
+        xp: stats.xp,
         inventory: stats.inventory,
         unlockedBadges: newBadges,
         loading: false,
@@ -52,6 +53,7 @@ const useStatsStore = create((set, get) => ({
       totalCompleted: 0,
       lastActivityDate: null,
       coins: 0,
+      xp: 0,
       inventory: {},
       unlockedBadges: [],
       _unsub: null,
@@ -62,12 +64,12 @@ const useStatsStore = create((set, get) => ({
 
 /** Selector: calculate user level from total completed tasks */
 export function selectLevel(state) {
-  return Math.floor(state.totalCompleted / 10) + 1;
+  return Math.floor((state.xp || 0) / 100) + 1;
 }
 
 /** Selector: progress towards next level (0-100%) */
 export function selectLevelProgress(state) {
-  return (state.totalCompleted % 10) * 10;
+  return (state.xp || 0) % 100;
 }
 
 export default useStatsStore;

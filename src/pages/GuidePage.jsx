@@ -19,13 +19,14 @@ export default function GuidePage() {
             Ogni task ti dà un quantitativo base dipendente dalla sua difficoltà:
           </p>
           <ul className="list-disc pl-5 opacity-90 space-y-1">
-            <li><strong>Facile:</strong> 10 Monete / XP</li>
-            <li><strong>Media:</strong> 25 Monete / XP</li>
-            <li><strong>Difficile:</strong> 50 Monete / XP</li>
+            <li><strong>Facile:</strong> 10 Monete / 10 XP</li>
+            <li><strong>Media:</strong> 25 Monete / 20 XP</li>
+            <li><strong>Difficile:</strong> 50 Monete / 30 XP</li>
           </ul>
           <p className="mt-2">
-            <strong>🚀 Progetti Speciali:</strong> I "Progetti" richiedono l'uso di sotto-tappe. Essendo più lunghi da completare, moltiplicano la ricompensa finale:
-            <br/>Facile (x2), Media (x3), Difficile (x4). Inoltre ogni singola tappa segnata ti fornisce un piccolo bonus di 5 Monete.
+            <strong>🚀 Progetti Speciali:</strong> I "Progetti" sono missioni a lungo termine. 
+            Ogni tappa (subtask) completata ti fornisce un premio immediato di <strong>+2 XP e +5 Monete</strong>. 
+            Completare l'intero progetto ti garantisce un <strong>Bonus Epico di +50 XP</strong>!
           </p>
         </div>
       )
@@ -52,9 +53,9 @@ export default function GuidePage() {
         <div className="space-y-2 text-sm text-[rgba(255,255,255,0.85)]">
           <p>Usa le <strong>Monete d'Oro</strong> raccolte per acquistare oggetti nella Bottega o per scambiarle con ricompense che tu stesso definisci!</p>
           <ul className="list-disc pl-5 opacity-90 space-y-2 mt-2">
-            <li><strong>🍷 Pozione Curativa:</strong> Ti permette di recuperare lo streak precedente nel caso in cui tu lo abbia perso ieri. Molto utile per riprendere da dove eri rimasto!</li>
-            <li><strong>📜 Pergamena del Tempo (WIP):</strong> A breve ti permetterà di estendere una scadenza.</li>
-            <li><strong>🧪 Elisir del Focus:</strong> Ti garantisce XP e Monete RADDOPPIATE per le successive 24 ore. Ottimo quando sai di avere una giornata produttiva!</li>
+            <li><strong>🍷 Pozione Curativa:</strong> Ti permette di recuperare lo streak precedente nel caso in cui tu lo abbia perso ieri.</li>
+            <li><strong>📜 Pergamena del Tempo:</strong> Ti permette di spostare la scadenza di una missione a tua scelta.</li>
+            <li><strong>🧪 Elisir del Focus:</strong> Ti garantisce XP e Monete RADDOPPIATE per le successive 24 ore.</li>
           </ul>
           <p className="mt-4 border-t border-[rgba(255,255,255,0.1)] pt-2 text-[#D2BBFF]">
             <strong>🎁 I Tuoi Desideri:</strong> Puoi creare ricompense personalizzate (es. "Guardare un film", "Pausa snack") e comprarle scalandoti le monete in-game, trasformando i tuoi successi in premi reali.
