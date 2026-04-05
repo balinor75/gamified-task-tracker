@@ -16,13 +16,15 @@ const TASKS = 'tasks';
 /**
  * Add a new task for the authenticated user.
  */
-export async function addTask(uid, title) {
+export async function addTask(uid, title, difficulty = 'easy', deadline = null) {
   return addDoc(collection(db, TASKS), {
     title: title.trim(),
     user_id: uid,
     completed: false,
     created_at: serverTimestamp(),
     completed_at: null,
+    difficulty, // Phase 2
+    deadline,   // Phase 2
     subtasks: [], // Phase 1: Support for complex missions
   });
 }

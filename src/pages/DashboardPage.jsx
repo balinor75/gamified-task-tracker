@@ -63,10 +63,10 @@ export default function DashboardPage() {
     return tasks;
   }, [tasks, filter]);
 
-  const handleAddTask = async (title) => {
+  const handleAddTask = async (title, difficulty, deadline) => {
     if (!user) return;
     try {
-      await addTask(user.uid, title);
+      await addTask(user.uid, title, difficulty, deadline);
     } catch (e) {
       console.error("Error adding task:", e);
     }

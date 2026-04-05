@@ -9,6 +9,9 @@ function DifficultyBadge({ difficulty }) {
   if (difficulty === 'hard') {
     return <span className="badge-hard">Difficile</span>;
   }
+  if (difficulty === 'medium') {
+    return <span className="badge-medium">Media</span>;
+  }
   return <span className="badge-easy">Facile</span>;
 }
 
@@ -85,6 +88,23 @@ export default function TaskItem({ task, onToggle, onDelete }) {
     // che non implementiamo quella logica. Essendo Fase 1, se la task è completata la lascio completata ma 
     // potrei permettere di riaprirla. Per ora aggiorno solo l'array.
     await updateTask(task.id, { subtasks: newSubtasks, completed: false });
+  };
+
+  const handleShare = async () => {
+    const dlStr = task.deadline ? ` entro il ${new Date(task.deadline).toLocaleDateString('it-IT')}` : '';
+    const text = `Aetheric Quest: Ricorda di completare "${task.title}"${dlStr}. 💪`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Promemoria',
+          text: text,
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      alert("La condivisione nativa non è supportata su questo dispositivo.\n\n" + text);
+    }
   };
 
   return (
@@ -271,6 +291,22 @@ export default function TaskItem({ task, onToggle, onDelete }) {
                     </button>
                   )}
                 </form>
+
+                {/* Azioni Estese: Web Share API */}
+                <div className="mt-4 pt-3 border-t border-[rgba(210,187,255,0.06)] flex justify-end">
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-[rgba(124,58,237,0.2)]"
+                    style={{ background: 'rgba(124,58,237,0.1)', color: '#D2BBFF' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                      <polyline points="16 6 12 2 8 6"></polyline>
+                      <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    Promemoria
+                  </button>
+                </div>
 
               </div>
             </motion.div>
