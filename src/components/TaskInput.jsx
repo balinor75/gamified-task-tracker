@@ -77,12 +77,12 @@ export default function TaskInput({ onAdd }) {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden bg-[rgba(25,23,37,0.7)] border-t border-[rgba(210,187,255,0.06)]"
             >
-              <div className="p-3 pl-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="p-3 pl-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-wrap">
                 
                 {/* Difficoltà */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider">Difficoltà:</span>
-                  <div className="flex space-x-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider shrink-0">Difficoltà:</span>
+                  <div className="flex flex-wrap gap-1">
                     <button
                       type="button"
                       onClick={() => setDifficulty('easy')}
@@ -120,19 +120,21 @@ export default function TaskInput({ onAdd }) {
                 </div>
 
                 {/* Scadenza */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider">Scadenza:</span>
-                  <input
-                    type="date"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                    className="bg-[rgba(255,255,255,0.04)] border border-[rgba(210,187,255,0.12)] rounded-lg px-2 py-1 text-xs text-[#DEE1F7] focus:outline-none focus:border-[#7C3AED]/50 transition-colors"
-                  />
-                  {deadline && (
-                     <button type="button" onClick={() => setDeadline('')} className="text-[#FFB4AB] opacity-80 hover:opacity-100 transition-opacity">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                     </button>
-                  )}
+                <div className="flex flex-wrap items-center gap-2 max-w-full">
+                  <span className="text-xs font-semibold text-[#958DA1] uppercase tracking-wider shrink-0">Scadenza:</span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <input
+                      type="date"
+                      value={deadline}
+                      onChange={(e) => setDeadline(e.target.value)}
+                      className="bg-[rgba(255,255,255,0.04)] border border-[rgba(210,187,255,0.12)] rounded-lg px-2 py-1 text-xs text-[#DEE1F7] focus:outline-none focus:border-[#7C3AED]/50 transition-colors max-w-[130px] sm:max-w-none"
+                    />
+                    {deadline && (
+                       <button type="button" onClick={() => setDeadline('')} className="text-[#FFB4AB] opacity-80 hover:opacity-100 transition-opacity">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                       </button>
+                    )}
+                  </div>
                 </div>
 
               </div>
