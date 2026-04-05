@@ -79,12 +79,13 @@ export default function DashboardPage() {
       if (!currentlyCompleted && user) {
         playCompleteSound();
         setShowEffect(true);
-        await updateStatsOnComplete(user.uid);
+        const taskObj = tasks.find(t => t.id === taskId);
+        await updateStatsOnComplete(user.uid, taskObj);
       }
     } catch (e) {
       console.error("Error toggling task:", e);
     }
-  }, [user]);
+  }, [user, tasks]);
 
   const handleDeleteTask = async (taskId) => {
     try {
@@ -109,7 +110,7 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-        {/* ── Header: "Ciao, Marco 👋" + LVL pill ── */}
+        {/* ── Header: "Ciao, Marco 👋" + LVL & Coins ── */}
         <div className="mb-4 flex justify-between items-start pt-1">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#DEE1F7' }}>
@@ -120,17 +121,37 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex flex-col items-end gap-1.5">
-            <motion.span
-              key={level}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 22 }}
-              className="level-pill"
-            >
-              LVL {level}
-            </motion.span>
-            {/* XP progress bar under LVL pill */}
-            <div className="progress-track w-20">
+            <div className="flex items-center gap-2">
+              <motion.span
+                key={`coins-${useStatsStore.getState().coins}`}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="chip-xp flex items-center gap-1"
+                style={{
+                  background: 'rgba(238,152,0,0.15)',
+                  color: '#FFB95F',
+                  borderColor: 'rgba(238,152,0,0.25)',
+                  fontSize: '0.75rem',
+                  padding: '4px 8px',
+                }}
+              >
+                <span>🪙</span>
+                <span className="font-bold">{useStatsStore(state => state.coins)}</span>
+              </motion.span>
+
+              <motion.span
+                key={level}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+                className="level-pill"
+              >
+                LVL {level}
+              </motion.span>
+            </div>
+            
+            {/* XP progress bar under pills */}
+            <div className="progress-track w-full flex-shrink-0" style={{ maxWidth: '80px', alignSelf: 'flex-end' }}>
               <motion.div
                 className="progress-fill"
                 initial={{ width: 0 }}

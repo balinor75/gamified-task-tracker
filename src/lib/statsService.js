@@ -73,6 +73,8 @@ export async function getOrCreateStats(uid) {
     longest_streak: 0,
     total_completed: 0,
     last_activity_date: null,
+    coins: 0,
+    inventory: {},
   };
 
   await setDoc(ref, defaults);
@@ -81,25 +83,28 @@ export async function getOrCreateStats(uid) {
 
 /**
  * Called when a user completes a task.
- * Updates streak logic and increments total_completed.
- * Returns the new stats object and a list of newly unlocked badge IDs.
+ * Updates streak logic, increments total_completed, and awards coins.
  */
-export async function updateStatsOnComplete(uid) {
+export async function updateStatsOnComplete(uid, task) {
   const ref = doc(db, STATS_COL, uid);
   const snap = await getDoc(ref);
 
   let stats;
   if (!snap.exists()) {
-    // First ever completion — create the doc
     stats = {
       user_id: uid,
       current_streak: 0,
       longest_streak: 0,
       total_completed: 0,
       last_activity_date: null,
+      coins: 0,
+      inventory: {},
     };
   } else {
     stats = snap.data();
+    // Migrazione al volo per vecchi documenti
+    if (stats.coins === undefined) stats.coins = 0;
+    if (stats.inventory === undefined) stats.inventory = {};
   }
 
   const today = todayKey();
@@ -112,7 +117,6 @@ export async function updateStatsOnComplete(uid) {
 
   if (lastKey === today) {
     // Already completed a task today — streak unchanged
-    // Just increment total
   } else if (lastKey === yesterday) {
     // Consecutive day — increment streak
     newStreak += 1;
@@ -124,15 +128,32 @@ export async function updateStatsOnComplete(uid) {
   const newTotal = stats.total_completed + 1;
   const newLongest = Math.max(stats.longest_streak, newStreak);
 
+  // Calcolo Ricompensa (Phase 3)
+  let baseReward = 10;
+  if (task?.difficulty === 'medium') baseReward = 25;
+  if (task?.difficulty === 'hard') baseReward = 50;
+
+  let subtaskReward = 0;
+  if (task?.subtasks && Array.isArray(task.subtasks)) {
+    // Premiamo solo i sottotask completati
+    const completedSubtasks = task.subtasks.filter(st => st.completed).length;
+    subtaskReward = completedSubtasks * 5;
+  }
+
+  const earnedCoins = baseReward + subtaskReward;
+  const newCoins = stats.coins + earnedCoins;
+
   const updates = {
     current_streak: newStreak,
     longest_streak: newLongest,
     total_completed: newTotal,
     last_activity_date: serverTimestamp(),
+    coins: newCoins,
   };
 
   if (!snap.exists()) {
     updates.user_id = uid;
+    updates.inventory = {};
     await setDoc(ref, updates);
   } else {
     await updateDoc(ref, updates);
@@ -142,12 +163,12 @@ export async function updateStatsOnComplete(uid) {
     current_streak: newStreak,
     longest_streak: newLongest,
     total_completed: newTotal,
+    coins: newCoins,
   };
 }
 
 /**
  * Subscribe to real-time updates on user stats.
- * Returns an unsubscribe function.
  */
 export function subscribeStats(uid, callback) {
   const ref = doc(db, STATS_COL, uid);
@@ -155,9 +176,14 @@ export function subscribeStats(uid, callback) {
     ref,
     (snap) => {
       if (snap.exists()) {
-        callback({ id: snap.id, ...snap.data() });
+        const data = snap.data();
+        callback({
+          id: snap.id,
+          coins: data.coins || 0,
+          inventory: data.inventory || {},
+          ...data
+        });
       } else {
-        // No stats yet — return defaults
         callback({
           id: uid,
           user_id: uid,
@@ -165,11 +191,12 @@ export function subscribeStats(uid, callback) {
           longest_streak: 0,
           total_completed: 0,
           last_activity_date: null,
+          coins: 0,
+          inventory: {},
         });
       }
     },
     (error) => {
-      // On permission or network errors, return defaults so the UI doesn't hang
       console.error('Stats subscription error:', error);
       callback({
         id: uid,
@@ -178,6 +205,8 @@ export function subscribeStats(uid, callback) {
         longest_streak: 0,
         total_completed: 0,
         last_activity_date: null,
+        coins: 0,
+        inventory: {},
       });
     }
   );
