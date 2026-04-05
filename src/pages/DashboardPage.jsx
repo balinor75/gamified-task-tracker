@@ -103,42 +103,41 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="p-4 pb-24">
+    <div className="p-4 pb-28">
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.35 }}
       >
-        {/* Header */}
-        <div className="mb-4 flex justify-between items-end">
+        {/* ── Header: "Ciao, Marco 👋" + LVL pill ── */}
+        <div className="mb-4 flex justify-between items-start pt-1">
           <div>
-            <h1 className="text-2xl font-bold text-text">
+            <h1 className="text-2xl font-bold" style={{ color: '#DEE1F7' }}>
               Ciao{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''} 👋
             </h1>
-            <p className="text-text-secondary text-sm mt-1">
-              Pronto per una giornata produttiva?
+            <p className="text-sm mt-0.5" style={{ color: '#958DA1' }}>
+              Pronto per una nuova missione?
             </p>
           </div>
-          <div className="text-right">
-            <motion.div
+          <div className="flex flex-col items-end gap-1.5">
+            <motion.span
               key={level}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="relative"
+              transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+              className="level-pill"
             >
-              <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">
-                Lvl {level}
-              </span>
-              {/* Level progress ring (simplified as a bottom bar) */}
-              <div className="mt-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${levelProgress}%` }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  className="h-full bg-primary/50 rounded-full"
-                />
-              </div>
-            </motion.div>
+              LVL {level}
+            </motion.span>
+            {/* XP progress bar under LVL pill */}
+            <div className="progress-track w-20">
+              <motion.div
+                className="progress-fill"
+                initial={{ width: 0 }}
+                animate={{ width: `${levelProgress}%` }}
+                transition={{ duration: 0.7, delay: 0.25, ease: 'easeOut' }}
+              />
+            </div>
           </div>
         </div>
 

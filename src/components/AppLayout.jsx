@@ -5,10 +5,18 @@ import { useAuth } from '../contexts/AuthContext';
 import useStatsStore from '../stores/useStatsStore';
 
 const pageVariants = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
+  exit:    { opacity: 0, y: -6, transition: { duration: 0.14 } },
 };
+
+// Nav items definition
+const NAV_ITEMS = [
+  { to: '/',        icon: '🏠', label: 'Home'    },
+  { to: '/stats',   icon: '📊', label: 'Stats'   },
+  { to: '/shop',    icon: '🏪', label: 'Shop'    },
+  { to: '/settings',icon: '⚙️', label: 'Impost.' },
+];
 
 export default function AppLayout() {
   const { user } = useAuth();
@@ -22,8 +30,9 @@ export default function AppLayout() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-surface text-text">
-      {/* Main content area with page transitions */}
+    <div className="min-h-screen" style={{ backgroundColor: '#0E1322', color: '#DEE1F7' }}>
+
+      {/* Main content — padded for bottom nav */}
       <main className="max-w-lg mx-auto">
         <AnimatePresence mode="wait">
           <motion.div
@@ -38,12 +47,15 @@ export default function AppLayout() {
         </AnimatePresence>
       </main>
 
-      {/* Bottom navigation bar */}
-      <nav className="fixed bottom-0 left-0 right-0 glass-card bg-surface-card/70 backdrop-blur-2xl border-t border-white/5 safe-bottom pb-2 pt-1 z-50">
-        <div className="max-w-lg mx-auto flex items-center justify-around h-14">
-          <NavItem to="/" icon="🏠" label="Home" />
-          <NavItem to="/stats" icon="📊" label="Stats" />
-          <NavItem to="/settings" icon="⚙️" label="Impost." />
+      {/* ── Bottom Navigation Bar ── */}
+      <nav
+        className="nav-bar fixed bottom-0 left-0 right-0 safe-bottom z-50"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
+      >
+        <div className="max-w-lg mx-auto flex items-center justify-around h-[60px] px-2">
+          {NAV_ITEMS.map((item) => (
+            <NavItem key={item.to} {...item} />
+          ))}
         </div>
       </nav>
     </div>
@@ -54,25 +66,34 @@ function NavItem({ to, icon, label }) {
   return (
     <NavLink
       to={to}
+      end={to === '/'}
       className={({ isActive }) =>
-        `flex flex-col items-center justify-center gap-1 w-16 h-full rounded-2xl transition-all duration-200 ${
-          isActive 
-            ? 'text-primary scale-105' 
-            : 'text-text-secondary hover:text-text hover:bg-white/5'
-        }`
+        `relative flex flex-col items-center justify-center gap-0.5 w-[72px] h-[52px] rounded-2xl
+         transition-all duration-200 select-none
+         ${isActive ? 'nav-item-active' : 'nav-item-inactive hover:text-text/70'}`
       }
     >
       {({ isActive }) => (
         <>
-          <span className="text-xl mb-0.5">{icon}</span>
-          <span className={`text-[10px] font-medium leading-none ${isActive ? 'text-primary' : ''}`}>
+          <motion.span
+            className="text-[22px] leading-none"
+            animate={isActive ? { scale: 1.08 } : { scale: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+          >
+            {icon}
+          </motion.span>
+          <span
+            className="text-[10px] font-semibold leading-none"
+            style={{ color: isActive ? '#D2BBFF' : '#958DA1' }}
+          >
             {label}
           </span>
+          {/* Active dot indicator */}
           {isActive && (
             <motion.div
-              layoutId="nav-indicator"
-              className="absolute -bottom-1 w-5 h-0.5 bg-primary rounded-full"
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              layoutId="nav-dot"
+              className="nav-dot absolute bottom-1.5"
+              transition={{ type: 'spring', stiffness: 380, damping: 26 }}
             />
           )}
         </>
