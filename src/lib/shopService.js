@@ -22,31 +22,42 @@ export async function buyItem(uid, itemId, price) {
 
   await runTransaction(db, async (transaction) => {
     const statsDoc = await transaction.get(statsRef);
-    
-    if (!statsDoc.exists()) {
-      throw new Error("Stats doc does not exist!");
-    }
+    if (price < 0) throw new Error("Prezzo non valido");
 
-    const data = statsDoc.data();
-    const currentCoins = data.coins || 0;
+    const stats = statsDoc.exists() ? statsDoc.data() : {
+      coins: 0,
+      inventory: {},
+      user_id: uid
+    };
+
+    const currentCoins = stats.coins || 0;
 
     if (currentCoins < price) {
       throw new InsufficientFundsError("Non hai abbastanza Monete d'Oro!");
     }
 
-    const currentInventory = data.inventory || {};
+    const currentInventory = stats.inventory || {};
     const itemRecord = currentInventory[itemId] || { quantity: 0 };
 
-    // Esegui la transazione
-    transaction.update(statsRef, {
-      coins: currentCoins - price,
-      inventory: {
-        ...currentInventory,
-        [itemId]: {
-          quantity: itemRecord.quantity + 1,
+    if (!statsDoc.exists()) {
+      transaction.set(statsRef, {
+        ...stats,
+        coins: currentCoins - price,
+        inventory: {
+          [itemId]: { quantity: 1 }
         }
-      }
-    });
+      });
+    } else {
+      transaction.update(statsRef, {
+        coins: currentCoins - price,
+        inventory: {
+          ...currentInventory,
+          [itemId]: {
+            quantity: itemRecord.quantity + 1,
+          }
+        }
+      });
+    }
   });
 }
 

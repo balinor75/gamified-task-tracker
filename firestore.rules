@@ -1,18 +1,31 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Function to check if the user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Function to check if the user is the owner of the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
     match /tasks/{taskId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.user_id;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
+      allow read, update, delete: if isOwner(resource.data.user_id);
+      allow create: if isOwner(request.resource.data.user_id);
     }
+    
     match /user_stats/{statId} {
-      allow read: if request.auth != null && request.auth.uid == statId;
-      allow update: if request.auth != null && request.auth.uid == statId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
+      // The document ID is the user's UID
+      allow read, update: if isOwner(statId);
+      allow create: if isOwner(statId) && request.resource.data.user_id == statId;
     }
+    
     match /custom_rewards/{rewardId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.user_id;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
+      allow read, update, delete: if isOwner(resource.data.user_id);
+      allow create: if isOwner(request.resource.data.user_id);
     }
   }
 }

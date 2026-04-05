@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import useTaskStore from '../stores/useTaskStore';
 import useStatsStore, { selectLevel, selectLevelProgress } from '../stores/useStatsStore';
-import { addTask, toggleTaskComplete, deleteTask } from '../lib/taskService';
-import { updateStatsOnComplete } from '../lib/statsService';
+import { addTask, toggleTaskComplete, deleteTask, completeTaskWithRewards } from '../lib/taskService';
 import { getNewlyUnlocked, getBadgeById } from '../lib/badges';
 import { playCompleteSound, playBadgeSound } from '../lib/sounds';
 import TaskInput from '../components/TaskInput';
@@ -100,18 +99,19 @@ export default function DashboardPage() {
 
   const handleToggleTask = useCallback(async (taskId, currentlyCompleted) => {
     try {
-      await toggleTaskComplete(taskId, currentlyCompleted);
-      // If completing (not un-completing), trigger gamification
       if (!currentlyCompleted && user) {
+        // Atomic Task Completion + Reward
+        await completeTaskWithRewards(user.uid, taskId);
         playCompleteSound();
         setShowEffect(true);
-        const taskObj = tasks.find(t => t.id === taskId);
-        await updateStatsOnComplete(user.uid, taskObj);
+      } else {
+        // Just un-completing (no rewards deducted, as per current design)
+        await toggleTaskComplete(taskId, currentlyCompleted);
       }
     } catch (e) {
       console.error("Error toggling task:", e);
     }
-  }, [user, tasks]);
+  }, [user]);
 
   const handleDeleteTask = async (taskId) => {
     try {

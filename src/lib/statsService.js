@@ -2,7 +2,7 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
+  runTransaction,
   onSnapshot,
   serverTimestamp,
   Timestamp,
@@ -43,81 +43,54 @@ export async function getOrCreateStats(uid) {
  * Called when a user completes a task.
  * Updates streak logic, increments total_completed, and awards coins.
  */
-export async function updateStatsOnComplete(uid, task) {
-  const ref = doc(db, STATS_COL, uid);
-  const snap = await getDoc(ref);
-
-  let stats;
-  if (!snap.exists()) {
-    stats = {
-      user_id: uid,
-      current_streak: 0,
-      longest_streak: 0,
-      total_completed: 0,
-      last_activity_date: null,
-      coins: 0,
-      inventory: {},
-      previous_streak: 0,
-    };
-  } else {
-    stats = snap.data();
-    // Migrazione al volo per vecchi documenti
-    stats.current_streak = Number(stats.current_streak) || 0;
-    stats.longest_streak = Number(stats.longest_streak) || 0;
-    stats.total_completed = Number(stats.total_completed) || 0;
-    stats.coins = Number(stats.coins) || 0;
-    stats.inventory = stats.inventory || {};
-    stats.previous_streak = Number(stats.previous_streak) || 0;
-  }
-
+/**
+ * Helper to calculate the new stats state.
+ * Encapsulates the core gamification logic for reuse in transactions.
+ */
+export function calculateStatsUpdate(stats, task) {
   const today = todayKey();
   const yesterday = yesterdayKey();
   const lastKey = stats.last_activity_date
     ? toDateKey(stats.last_activity_date)
     : null;
 
-  let newStreak = stats.current_streak;
-  let newPreviousStreak = stats.previous_streak || 0;
+  let newStreak = Number(stats.current_streak) || 0;
+  let newPreviousStreak = Number(stats.previous_streak) || 0;
 
   if (lastKey === today) {
-    // Already completed a task today — streak unchanged
+    // Already completed a task today
   } else if (lastKey === yesterday) {
-    // Consecutive day — increment streak
     newStreak += 1;
   } else {
-    // Gap or first activity — start new streak
-    if (stats.current_streak > 0) {
-      newPreviousStreak = stats.current_streak;
+    if (newStreak > 0) {
+      newPreviousStreak = newStreak;
     }
     newStreak = 1;
   }
 
-  const newTotal = stats.total_completed + 1;
-  const newLongest = Math.max(stats.longest_streak, newStreak);
+  const newTotal = (Number(stats.total_completed) || 0) + 1;
+  const newLongest = Math.max(Number(stats.longest_streak) || 0, newStreak);
 
-  // Calcolo Ricompensa (Phase 3)
+  // Reward calculation
   let baseReward = 10;
   if (task?.difficulty === 'medium') baseReward = 25;
   if (task?.difficulty === 'hard') baseReward = 50;
 
-  // Moltiplicatore Progetti (Phase 5)
   if (task?.type === 'project') {
-    if (task?.difficulty === 'easy') baseReward *= 2;      // 20
-    else if (task?.difficulty === 'medium') baseReward *= 3; // 75
-    else if (task?.difficulty === 'hard') baseReward *= 4;   // 200
+    if (task?.difficulty === 'easy') baseReward *= 2;
+    else if (task?.difficulty === 'medium') baseReward *= 3;
+    else if (task?.difficulty === 'hard') baseReward *= 4;
   }
 
   let subtaskReward = 0;
   if (task?.subtasks && Array.isArray(task.subtasks)) {
-    // Premiamo solo i sottotask completati
     const completedSubtasks = task.subtasks.filter(st => st.completed).length;
     subtaskReward = completedSubtasks * 5;
   }
 
-  const earnedCoins = baseReward + subtaskReward;
-  let finalCoins = earnedCoins;
+  let finalCoins = baseReward + subtaskReward;
 
-  // Moltiplicatore Elisir del Focus
+  // Focus Elixir Multiplier
   if (stats.active_buffs && stats.active_buffs.double_xp_until) {
     const doubleUntil = stats.active_buffs.double_xp_until.toMillis 
       ? stats.active_buffs.double_xp_until.toMillis() 
@@ -127,9 +100,9 @@ export async function updateStatsOnComplete(uid, task) {
     }
   }
 
-  const newCoins = stats.coins + finalCoins;
+  const newCoins = (Number(stats.coins) || 0) + finalCoins;
 
-  const updates = {
+  return {
     current_streak: newStreak,
     longest_streak: newLongest,
     total_completed: newTotal,
@@ -137,21 +110,37 @@ export async function updateStatsOnComplete(uid, task) {
     coins: newCoins,
     previous_streak: newPreviousStreak,
   };
+}
 
-  if (!snap.exists()) {
-    updates.user_id = uid;
-    updates.inventory = {};
-    await setDoc(ref, updates);
-  } else {
-    await updateDoc(ref, updates);
-  }
+export async function updateStatsOnComplete(uid, task) {
+  const ref = doc(db, STATS_COL, uid);
 
-  return {
-    current_streak: newStreak,
-    longest_streak: newLongest,
-    total_completed: newTotal,
-    coins: newCoins,
-  };
+  return await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(ref);
+
+    const stats = snap.exists() ? snap.data() : {
+      user_id: uid,
+      current_streak: 0,
+      longest_streak: 0,
+      total_completed: 0,
+      last_activity_date: null,
+      coins: 0,
+      inventory: {},
+      previous_streak: 0,
+    };
+
+    const updates = calculateStatsUpdate(stats, task);
+
+    if (!snap.exists()) {
+      updates.user_id = uid;
+      updates.inventory = {};
+      transaction.set(ref, updates);
+    } else {
+      transaction.update(ref, updates);
+    }
+
+    return updates;
+  });
 }
 
 /**

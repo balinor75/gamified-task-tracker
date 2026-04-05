@@ -8,9 +8,11 @@ import {
   query,
   where,
   onSnapshot,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { todayKey, toDateKey } from './dateUtils';
+import { calculateStatsUpdate } from './statsService';
 
 const TASKS = 'tasks';
 
@@ -53,6 +55,56 @@ export async function toggleTaskComplete(taskId, currentlyCompleted, currentSubt
   }
 
   return updateDoc(ref, updates);
+}
+
+/**
+ * ATOMIC COMPLETION: Completes a task and updates user stats in a single transaction.
+ * Prevents race conditions and ensures rewards are always granted.
+ */
+export async function completeTaskWithRewards(uid, taskId) {
+  const taskRef = doc(db, TASKS, taskId);
+  const statsRef = doc(db, 'user_stats', uid);
+
+  return await runTransaction(db, async (transaction) => {
+    // 1. Get Task
+    const taskSnap = await transaction.get(taskRef);
+    if (!taskSnap.exists()) throw new Error("Task not found");
+    const taskData = taskSnap.data();
+
+    // Safety: don't reward twice
+    if (taskData.completed) return { alreadyCompleted: true };
+
+    // 2. Get Stats
+    const statsSnap = await transaction.get(statsRef);
+    const statsData = statsSnap.exists() ? statsSnap.data() : {
+      user_id: uid,
+      current_streak: 0,
+      longest_streak: 0,
+      total_completed: 0,
+      last_activity_date: null,
+      coins: 0,
+      inventory: {},
+    };
+
+    // 3. Calculate updates
+    const statsUpdates = calculateStatsUpdate(statsData, taskData);
+    
+    // 4. Perform Updates
+    transaction.update(taskRef, {
+      completed: true,
+      completed_at: serverTimestamp()
+    });
+
+    if (!statsSnap.exists()) {
+      statsUpdates.user_id = uid;
+      statsUpdates.inventory = {};
+      transaction.set(statsRef, statsUpdates);
+    } else {
+      transaction.update(statsRef, statsUpdates);
+    }
+
+    return statsUpdates;
+  });
 }
 
 /**
