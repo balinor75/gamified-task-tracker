@@ -199,9 +199,14 @@ export function subscribeTasks(uid, callback) {
         let isCompleted = data.completed;
         
         // Lazy-Reset for habits
+        // Guard: skip reset if completed_at is still a pending serverTimestamp
+        // (FieldValue objects have no toMillis/toDate and toDateKey returns null).
         if (data.type === 'habit' && isCompleted && data.completed_at) {
           const completedDate = toDateKey(data.completed_at);
-          if (completedDate !== today) {
+          // completedDate is null when the Firestore Timestamp hasn't resolved
+          // yet (local pending write). In that case we treat it as "today" and
+          // do NOT reset, avoiding the immediate-un-complete flicker.
+          if (completedDate !== null && completedDate !== today) {
             isCompleted = false; // Override client-side
           }
         }

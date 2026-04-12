@@ -21,18 +21,24 @@ function DifficultyBadge({ difficulty }) {
 
 function DeadlineChip({ deadline }) {
   if (!deadline) return null;
-  const date = new Date(deadline);
-  const label = date.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+  // deadline is stored as 'YYYY-MM-DD' local date string
+  const label = new Date(deadline + 'T12:00:00').toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
   
   // Phase 6: Deadline Colors
-  const todayStr = new Date().toISOString().split('T')[0];
-  const deadlineStr = date.toISOString().split('T')[0];
+  // Use local timezone (matches todayKey() in dateUtils)
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${y}-${m}-${d}`;
+  // deadline is already a YYYY-MM-DD string, compare directly
+  const deadlineStr = deadline.split('T')[0]; // handles both 'YYYY-MM-DD' and ISO strings
   
   let chipClass = "chip-deadline";
   if (deadlineStr < todayStr) {
-    chipClass += " expired"; // Rosso
+    chipClass += " expired"; // Rosso + pulse
   } else if (deadlineStr === todayStr) {
-    chipClass += " due-today"; // Arancione
+    chipClass += " due-today"; // Arancione + pulse
   }
 
   return (
@@ -67,6 +73,19 @@ export default function TaskItem({ task, user, onToggle, onDelete }) {
   const hasSubtasks = subtasks.length > 0;
   const completedSubtasksCount = subtasks.filter((st) => st.completed).length;
   const subtasksPercent = hasSubtasks ? Math.round((completedSubtasksCount / subtasks.length) * 100) : 0;
+
+  // Compute deadline urgency for card-level pulsing (only when not completed)
+  let deadlineCardClass = '';
+  if (!isCompleted && task.deadline) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const mn = String(now.getMonth() + 1).padStart(2, '0');
+    const dy = String(now.getDate()).padStart(2, '0');
+    const todayLocal = `${y}-${mn}-${dy}`;
+    const dlStr = task.deadline.split('T')[0];
+    if (dlStr < todayLocal) deadlineCardClass = 'card-deadline-expired';
+    else if (dlStr === todayLocal) deadlineCardClass = 'card-deadline-today';
+  }
 
   // Logic B: Check for deadline anomalies (solo per progetti)
   const maxSubtaskDeadline = subtasks.reduce((max, st) => (!max || (st.deadline && st.deadline > max) ? st.deadline : max), null);
@@ -178,7 +197,7 @@ export default function TaskItem({ task, user, onToggle, onDelete }) {
         style={{ x }}
         className={`relative z-10 glass-card glow-hover rounded-2xl p-4 shadow-sm transition-colors duration-300 ${
           isCompleted ? 'opacity-60' : ''
-        } ${isExpanded ? 'border-[rgba(124,58,237,0.3)] bg-[rgba(25,23,37,0.7)]' : ''}`}
+        } ${isExpanded ? 'border-[rgba(124,58,237,0.3)] bg-[rgba(25,23,37,0.7)]' : ''} ${deadlineCardClass}`}
       >
         {/* Header Principale: Cliccabile per espandere */}
         <div 
