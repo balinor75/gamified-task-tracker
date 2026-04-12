@@ -71,8 +71,17 @@ export async function completeTaskWithRewards(uid, taskId) {
     if (!taskSnap.exists()) throw new Error("Task not found");
     const taskData = taskSnap.data();
 
-    // Safety: don't reward twice
-    if (taskData.completed) return { alreadyCompleted: true };
+    // Safety: don't reward twice.
+    // Exception: habits reset daily (lazy-reset is client-side only).
+    // Firestore still holds completed:true from a previous day, so we must
+    // check the actual completion date before blocking the re-completion.
+    if (taskData.completed) {
+      if (taskData.type !== 'habit') return { alreadyCompleted: true };
+      // For habits: only block if already completed TODAY
+      const completedDate = toDateKey(taskData.completed_at);
+      if (completedDate === todayKey()) return { alreadyCompleted: true };
+      // Otherwise it's a new day — proceed with re-completion
+    }
 
     // 2. Get Stats
     const statsSnap = await transaction.get(statsRef);

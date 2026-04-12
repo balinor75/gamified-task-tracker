@@ -248,46 +248,48 @@ body {
   border: 1px solid rgba(255, 185, 95, 0.18);
 }
 
-/* Phase 6: Expired */
+/* Phase 6: Expired — pulsing red chip */
 .chip-deadline.expired {
-  background: rgba(255, 180, 171, 0.15); /* color-error locale */
+  background: rgba(255, 180, 171, 0.18);
   color: #FFB4AB;
-  border-color: rgba(255, 180, 171, 0.3);
-  animation: pulse-danger 2.5s infinite;
+  border-color: rgba(255, 180, 171, 0.4);
+  animation: chip-pulse-danger 1.6s ease-in-out infinite;
 }
 
-/* Phase 6: Due Today */
+/* Phase 6: Due Today — pulsing amber chip */
 .chip-deadline.due-today {
-  background: rgba(238, 152, 0, 0.15); /* color-gold-container locale */
-  color: #FFB95F; /* color-gold */
-  border-color: rgba(238, 152, 0, 0.3);
-  animation: pulse-warning 2.5s infinite;
+  background: rgba(238, 152, 0, 0.18);
+  color: #FFB95F;
+  border-color: rgba(238, 152, 0, 0.4);
+  animation: chip-pulse-warning 1.6s ease-in-out infinite;
 }
 
-@keyframes pulse-warning {
-  0%   { box-shadow: 0 0 0 0 rgba(238, 152, 0, 0.25); }
-  70%  { box-shadow: 0 0 0 6px rgba(238, 152, 0, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(238, 152, 0, 0); }
+@keyframes chip-pulse-danger {
+  0%, 100% { opacity: 1;    background: rgba(255, 180, 171, 0.18); }
+  50%       { opacity: 0.6; background: rgba(255, 180, 171, 0.35); }
 }
 
-/* Card-level highlight for expired / due-today tasks */
+@keyframes chip-pulse-warning {
+  0%, 100% { opacity: 1;    background: rgba(238, 152, 0, 0.18); }
+  50%       { opacity: 0.6; background: rgba(238, 152, 0, 0.35); }
+}
+
+/* Card-level highlight — border-color animation (not clipped by overflow:hidden) */
 .card-deadline-expired {
-  border-color: rgba(255, 180, 171, 0.35) !important;
-  animation: pulse-card-danger 3s ease-in-out infinite;
+  animation: card-border-danger 2s ease-in-out infinite;
 }
 .card-deadline-today {
-  border-color: rgba(238, 152, 0, 0.35) !important;
-  animation: pulse-card-warning 3s ease-in-out infinite;
+  animation: card-border-warning 2s ease-in-out infinite;
 }
 
-@keyframes pulse-card-danger {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 180, 171, 0); }
-  50%       { box-shadow: 0 0 12px 2px rgba(255, 180, 171, 0.12); }
+@keyframes card-border-danger {
+  0%, 100% { border-color: rgba(255, 180, 171, 0.18); }
+  50%       { border-color: rgba(255, 180, 171, 0.65); }
 }
 
-@keyframes pulse-card-warning {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(238, 152, 0, 0); }
-  50%       { box-shadow: 0 0 12px 2px rgba(238, 152, 0, 0.12); }
+@keyframes card-border-warning {
+  0%, 100% { border-color: rgba(238, 152, 0, 0.18); }
+  50%       { border-color: rgba(238, 152, 0, 0.60); }
 }
 
 @keyframes pulse-danger {
