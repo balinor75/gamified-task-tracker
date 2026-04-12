@@ -101,7 +101,8 @@ export default function SettingsPage() {
       <div className="glass-card rounded-2xl p-6">
         <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-4">Info App</h2>
         <div className="space-y-3">
-          <InfoRow label="Versione" value="1.2.0" />
+          <InfoRow label="Versione" value="1.1.0" />
+          <InfoRow label="Build" value="2026-04-12" />
           <InfoRow label="Stack" value="React + Firebase" />
           <InfoRow label="Autore" value="@balinor75" />
         </div>
